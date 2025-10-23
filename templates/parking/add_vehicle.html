@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Vehicle - UniPark{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Add Vehicle</h2>
+                    <p class="text-muted mb-0">Register your vehicle for faster bookings</p>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.make.id_for_label }}" class="form-label">Make</label>
+                                {{ form.make }}
+                                {% if form.make.errors %}
+                                    <div class="text-danger small">{{ form.make.errors.0 }}</div>
+                                {% endif %}
+                                
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.model.id_for_label }}" class="form-label">Model</label>
+                                {{ form.model }}
+                                {% if form.model.errors %}
+                                    <div class="text-danger small">{{ form.model.errors.0 }}</div>
+                                {% endif %}
+                                
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.year.id_for_label }}" class="form-label">Year</label>
+                                {{ form.year }}
+                                {% if form.year.errors %}
+                                    <div class="text-danger small">{{ form.year.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.color.id_for_label }}" class="form-label">Color (Optional)</label>
+                                {{ form.color }}
+                                {% if form.color.errors %}
+                                    <div class="text-danger small">{{ form.color.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.license_plate.id_for_label }}" class="form-label">License Plate</label>
+                            {{ form.license_plate }}
+                            {% if form.license_plate.errors %}
+                                <div class="text-danger small">{{ form.license_plate.errors.0 }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Enter your license plate number (e.g., ABC 123). Format: Lebanese format with space.
+                            </small>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="form-check">
+                                {{ form.is_primary }}
+                                <label class="form-check-label" for="{{ form.is_primary.id_for_label }}">
+                                    Set as primary vehicle
+                                </label>
+                            </div>
+                            <small class="form-text text-muted">
+                                This vehicle will be pre-selected when making reservations
+                            </small>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-plus-circle"></i> Add Vehicle
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'parking:dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const inputs = form.querySelectorAll('input');
+
+    // Live validation styling
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.checkValidity()) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else {
+                this.classList.remove('is-valid');
+                this.classList.add('is-invalid');
+            }
+        });
+
+        input.addEventListener('input', function() {
+            if (this.classList.contains('is-invalid') && this.checkValidity()) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+    });
+
+    // FIXED: Allow spaces but normalize uppercase
+    const licensePlateInput = document.getElementById('{{ form.license_plate.id_for_label }}');
+    licensePlateInput.addEventListener('input', function() {
+        // only convert to uppercase, don’t remove spaces
+        this.value = this.value.toUpperCase();
+
+        // only allow letters, numbers, and spaces
+        if (!/^[A-Z0-9\s]*$/.test(this.value)) {
+            this.setCustomValidity('License plate must contain only letters, numbers, or spaces');
+            this.classList.add('is-invalid');
+        } else {
+            this.setCustomValidity('');
+            this.classList.remove('is-invalid');
+        }
+    });
+
+    const yearInput = document.getElementById('{{ form.year.id_for_label }}');
+    const currentYear = new Date().getFullYear();
+
+    yearInput.addEventListener('input', function() {
+        const year = parseInt(this.value);
+        if (this.value && (year < 1990 || year > currentYear + 1)) {
+            this.setCustomValidity(`Please enter a valid year between 1990 and ${currentYear + 1}`);
+            this.classList.add('is-invalid');
+        } else {
+            this.setCustomValidity('');
+            this.classList.remove('is-invalid');
+        }
+    });
+
+    const makeInput = document.getElementById('{{ form.make.id_for_label }}');
+    const modelInput = document.getElementById('{{ form.model.id_for_label }}');
+
+    function capitalizeWords(input) {
+        return input.replace(/\b\w/g, function(char) {
+            return char.toUpperCase();
+        });
+    }
+
+    makeInput.addEventListener('blur', function() {
+        this.value = capitalizeWords(this.value.toLowerCase());
+    });
+
+    modelInput.addEventListener('blur', function() {
+        this.value = capitalizeWords(this.value.toLowerCase());
+    });
+});
+</script>
+{% endblock %}

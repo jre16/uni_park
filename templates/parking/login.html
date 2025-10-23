@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - UniPark{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-background">
+        <div class="wave wave1"></div>
+        <div class="wave wave2"></div>
+        <div class="wave wave3"></div>
+    </div>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="auth-card">
+                <div class="card-header text-center">
+                    <h2>Welcome Back</h2>
+                    <p class="text-muted mb-0">Sign in to your UniPark account</p>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.email_or_phone.id_for_label }}" class="form-label">Email or Phone Number</label>
+                            {{ form.email_or_phone }}
+                            {% if form.email_or_phone.errors %}
+                                <div class="text-danger small">{{ form.email_or_phone.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.password.id_for_label }}" class="form-label">Password</label>
+                            {{ form.password }}
+                            {% if form.password.errors %}
+                                <div class="text-danger small">{{ form.password.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-box-arrow-in-right"></i> Sign In
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-3">
+                        <a href="{% url 'parking:verify_email' %}" class="text-decoration-none small">
+                            Need to verify your email?
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <p class="mb-0">
+                        Don't have an account? 
+                        <a href="{% url 'parking:signup' %}" class="text-decoration-none">Sign Up</a>
+                    </p>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const inputs = form.querySelectorAll('input');
+    
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.checkValidity()) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else {
+                this.classList.remove('is-valid');
+                this.classList.add('is-invalid');
+            }
+        });
+    });
+    
+    // Email/phone validation
+    const emailPhoneInput = document.getElementById('{{ form.email_or_phone.id_for_label }}');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+    
+    emailPhoneInput.addEventListener('input', function() {
+        const value = this.value.trim();
+        
+        if (value.includes('@')) {
+            // Email validation
+            if (!emailRegex.test(value)) {
+                this.setCustomValidity('Please enter a valid email address');
+                this.classList.add('is-invalid');
+            } else {
+                this.setCustomValidity('');
+                this.classList.remove('is-invalid');
+            }
+        } else {
+            // Phone validation - remove all non-digits for validation
+            const phoneDigits = value.replace(/\D/g, '');
+            if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+                this.setCustomValidity('Please enter a valid phone number (10-15 digits)');
+                this.classList.add('is-invalid');
+            } else {
+                this.setCustomValidity('');
+                this.classList.remove('is-invalid');
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+
+{% block title %}Find Parking - UniPark{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-12">
+            <h1>Find Parking Near You</h1>
+            <p class="text-muted">Discover available parking spots with real-time pricing and availability</p>
+        </div>
+    </div>
+    
+    <!-- Search Form -->
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" id="searchForm">
+                        <div class="row align-items-end">
+                            <div class="col-md-5 mb-3">
+                                <label for="{{ form.query.id_for_label }}" class="form-label">Search Location</label>
+                                {{ form.query }}
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ form.sort_by.id_for_label }}" class="form-label">Sort By</label>
+                                {{ form.sort_by }}
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-search"></i> Search
+                                </button>
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <button type="button" class="btn btn-outline-secondary w-100" id="useLocationBtn">
+                                    <i class="bi bi-geo-alt"></i> Use My Location
+                                </button>
+                            </div>
+                        </div>
+                        {{ form.latitude }}
+                        {{ form.longitude }}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Results -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>Available Parking Lots</h3>
+                <span class="text-muted">{{ parking_lots.count }} results found</span>
+            </div>
+            
+            {% if parking_lots %}
+                <div class="row">
+                    {% for lot in parking_lots %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card parking-lot-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title mb-0">{{ lot.name }}</h5>
+                                    <span class="availability-indicator 
+                                        {% if lot.available_spots > 10 %}available
+                                        {% elif lot.available_spots > 3 %}limited
+                                        {% else %}full{% endif %}">
+                                    </span>
+                                </div>
+                                
+                                <p class="text-muted small mb-2">
+                                    <i class="bi bi-geo-alt"></i> {{ lot.address|truncatechars:50 }}
+                                </p>
+                                
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="price-badge">${{ lot.hourly_rate }}/hr</span>
+                                        <span class="text-muted small">
+                                            {{ lot.available_spots }} spots available
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock"></i> 
+                                        {{ lot.opening_time|time:"g:i A" }} - {{ lot.closing_time|time:"g:i A" }}
+                                    </small>
+                                </div>
+                                
+                                {% if lot.features %}
+                                <div class="mb-3">
+                                    <small class="text-muted">
+                                        <i class="bi bi-star"></i> {{ lot.features }}
+                                    </small>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'parking:parking_lot_detail' lot.id %}" class="btn btn-primary btn-sm flex-fill">
+                                        <i class="bi bi-info-circle"></i> Details
+                                    </a>
+                                    <button class="btn btn-outline-success btn-sm flex-fill reserve-btn" 
+                                            data-lot-id="{{ lot.id }}">
+                                        <i class="bi bi-calendar-plus"></i> Reserve
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-search text-muted" style="font-size: 4rem;"></i>
+                        <h4 class="text-muted mt-3">No parking lots found</h4>
+                        <p class="text-muted">Try adjusting your search criteria or browse all available locations</p>
+                        <a href="{% url 'parking:search_parking' %}" class="btn btn-primary">
+                            <i class="bi bi-arrow-clockwise"></i> Reset Search
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Map Sidebar -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Map View</h5>
+                </div>
+                <div class="card-body">
+                    <div id="mapContainer" class="map-container">
+                        <div class="text-center">
+                            <i class="bi bi-map text-muted" style="font-size: 3rem;"></i>
+                            <p class="mt-2 mb-0">Interactive map will appear here</p>
+                            <small class="text-muted">Showing {{ parking_lots.count }} parking locations</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Filters -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Filters</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="filterAvailable" checked>
+                        <label class="form-check-label" for="filterAvailable">
+                            Available Now
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="filterStudentDiscount">
+                        <label class="form-check-label" for="filterStudentDiscount">
+                            Student Discount
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="filter24_7">
+                        <label class="form-check-label" for="filter24_7">
+                            24/7 Access
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="filterCovered">
+                        <label class="form-check-label" for="filterCovered">
+                            Covered Parking
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const useLocationBtn = document.getElementById('useLocationBtn');
+    const searchForm = document.getElementById('searchForm');
+    const latInput = document.getElementById('{{ form.latitude.id_for_label }}');
+    const lngInput = document.getElementById('{{ form.longitude.id_for_label }}');
+    
+    // Use current location
+    useLocationBtn.addEventListener('click', function() {
+        if (navigator.geolocation) {
+            useLocationBtn.disabled = true;
+            useLocationBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Getting location...';
+            
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    latInput.value = position.coords.latitude;
+                    lngInput.value = position.coords.longitude;
+                    
+                    // Submit form with location
+                    searchForm.submit();
+                },
+                function(error) {
+                    console.error('Geolocation error:', error);
+                    alert('Unable to get your location. Please enter a location manually.');
+                    useLocationBtn.disabled = false;
+                    useLocationBtn.innerHTML = '<i class="bi bi-geo-alt"></i> Use My Location';
+                }
+            );
+        } else {
+            alert('Geolocation is not supported by this browser.');
+        }
+    });
+    
+    // Handle reserve button clicks
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.reserve-btn')) {
+            const lotId = e.target.closest('.reserve-btn').getAttribute('data-lot-id');
+            // In a real application, this would redirect to a reservation form
+            alert('Reservation feature coming soon! Lot ID: ' + lotId);
+        }
+    });
+    
+    // Filter functionality (placeholder)
+    const filters = document.querySelectorAll('.form-check-input');
+    filters.forEach(filter => {
+        filter.addEventListener('change', function() {
+            // In a real application, this would filter the results
+            console.log('Filter changed:', this.id, this.checked);
+        });
+    });
+    
+    // Auto-search as user types (with debounce)
+    let searchTimeout;
+    const queryInput = document.getElementById('{{ form.query.id_for_label }}');
+    if (queryInput) {
+        queryInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                if (this.value.length > 2) {
+                    searchForm.submit();
+                }
+            }, 500);
+        });
+    }
+});
+</script>
+{% endblock %}

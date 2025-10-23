@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Verify Email - UniPark{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-background">
+        <div class="wave wave1"></div>
+        <div class="wave wave2"></div>
+        <div class="wave wave3"></div>
+    </div>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="auth-card">
+                <div class="card-header text-center">
+                    <h2>Verify Your Email</h2>
+                    <p class="text-muted mb-0">Enter the verification code sent to your email</p>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="verification_code" class="form-label">Verification Code</label>
+                            <input type="text" class="form-control" id="verification_code" name="verification_code" 
+                                   pattern="[0-9]{6}" maxlength="6" required>
+                            <small class="form-text text-muted">6-digit code from your email</small>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-circle"></i> Verify Email
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-3">
+                        <form method="post" action="{% url 'parking:resend_verification' %}" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="email" id="resend_email">
+                            <button type="submit" class="btn btn-link text-decoration-none small">
+                                Didn't receive the code? Resend
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <p class="mb-0">
+                        Already verified? 
+                        <a href="{% url 'parking:login' %}" class="text-decoration-none">Sign In</a>
+                    </p>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const emailInput = document.getElementById('email');
+    const resendEmailInput = document.getElementById('resend_email');
+    const verificationInput = document.getElementById('verification_code');
+    
+    // Update resend form when email is entered
+    emailInput.addEventListener('input', function() {
+        resendEmailInput.value = this.value;
+    });
+    
+    // Format verification code input
+    verificationInput.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '');
+        if (this.value.length > 6) {
+            this.value = this.value.slice(0, 6);
+        }
+    });
+    
+    // Auto-focus next input after 6 digits
+    verificationInput.addEventListener('input', function() {
+        if (this.value.length === 6) {
+            this.form.querySelector('button[type="submit"]').focus();
+        }
+    });
+});
+</script>
+{% endblock %}

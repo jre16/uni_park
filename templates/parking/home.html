@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container text-center">
+        <h1>Find Parking Made Simple</h1>
+        <p class="lead">Discover, reserve, and pay for parking spots near AUB with ease</p>
+        <div class="mt-4">
+            <a href="{% url 'parking:search_parking' %}" class="btn btn-success btn-lg me-3">
+                <i class="bi bi-search"></i> Find Parking Now
+            </a>
+            {% if not user.is_authenticated %}
+            <a href="{% url 'parking:signup' %}" class="btn btn-outline-light btn-lg">
+                Get Started
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-4 mb-4">
+                <div class="feature-icon">
+                    <i class="bi bi-geo-alt"></i>
+                </div>
+                <h3>Nearby Parking</h3>
+                <p>Find parking lots near your location with real-time availability and pricing information.</p>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-icon">
+                    <i class="bi bi-qr-code"></i>
+                </div>
+                <h3>QR Code Entry</h3>
+                <p>Fast and contactless entry with QR code scanning for a seamless parking experience.</p>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-icon">
+                    <i class="bi bi-credit-card"></i>
+                </div>
+                <h3>Easy Payments</h3>
+                <p>Secure payment processing with digital receipts for easy expense tracking.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Stats -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3 mb-4">
+                <div class="stats-card">
+                    <div class="stats-value stats-primary">x</div>
+                    <p class="stats-label">Parking Locations</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stats-card">
+                    <div class="stats-value stats-success">x</div>
+                    <p class="stats-label">Happy Students</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stats-card">
+                    <div class="stats-value stats-warning">x</div>
+                    <p class="stats-label">Satisfaction Rate</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stats-card">
+                    <div class="stats-value stats-info">24/7</div>
+                    <p class="stats-label">Available</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center mb-5">
+                <h2>How It Works</h2>
+                <p class="lead">Get parking in three simple steps</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4 text-center mb-4">
+                <div class="how-it-works-card">
+                    <div class="step-circle step-1">
+                        <h3 class="mb-0">1</h3>
+                    </div>
+                    <h4>Search & Compare</h4>
+                    <p>Find parking lots near your destination with real-time pricing and availability.</p>
+                </div>
+            </div>
+            <div class="col-md-4 text-center mb-4">
+                <div class="how-it-works-card">
+                    <div class="step-circle step-2">
+                        <h3 class="mb-0">2</h3>
+                    </div>
+                    <h4>Reserve & Pay</h4>
+                    <p>Book your spot in advance and pay securely through our platform.</p>
+                </div>
+            </div>
+            <div class="col-md-4 text-center mb-4">
+                <div class="how-it-works-card">
+                    <div class="step-circle step-3">
+                        <h3 class="mb-0">3</h3>
+                    </div>
+                    <h4>Park & Go</h4>
+                    <p>Use your QR code for quick entry and exit. It's that simple!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

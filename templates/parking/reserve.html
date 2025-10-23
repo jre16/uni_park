@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}Reserve a Spot at {{ parking_lot.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+
+            <a href="{% url 'parking:parking_lot_detail' parking_lot.id %}" class="btn btn-outline-secondary mb-4">
+                <i class="bi bi-arrow-left"></i> Back to Details
+            </a>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h2 class="text-center mb-4 text-primary">Reserve a Spot at {{ parking_lot.name }}</h2>
+
+                    <p class="text-center text-muted mb-4">
+                        Please select your vehicle and reservation time below. 
+                        Operating hours are from 
+                        <strong>{{ parking_lot.opening_time|time:"g:i A" }}</strong> 
+                        to 
+                        <strong>{{ parking_lot.closing_time|time:"g:i A" }}</strong>.
+                    </p>
+
+                    <form method="POST" 
+                          action="{% url 'parking:reserve_parking' parking_lot.id %}" 
+                          class="needs-validation" novalidate>
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="vehicle" class="form-label fw-semibold">Select Vehicle</label>
+                            <select class="form-select" id="vehicle" name="vehicle" required>
+                                <option value="" selected disabled>-- Choose your vehicle --</option>
+                                {% for vehicle in vehicles %}
+                                    <option value="{{ vehicle.id }}">
+                                        {{ vehicle.make }} {{ vehicle.model }} ({{ vehicle.license_plate }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="start_time" class="form-label fw-semibold">Start Time (with AM/PM)</label>
+                            <input type="datetime-local" class="form-control" id="start_time" name="start_time" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="end_time" class="form-label fw-semibold">End Time (with AM/PM)</label>
+                            <input type="datetime-local" class="form-control" id="end_time" name="end_time" required>
+                        </div>
+
+                        <div class="alert alert-info mt-3" role="alert">
+                            <strong>Hourly Rate:</strong> ${{ parking_lot.hourly_rate }} <br>
+                            <strong>Available Spots:</strong> {{ parking_lot.available_spots }} of {{ parking_lot.total_spots }}
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2">
+                            <i class="bi bi-calendar-check"></i> Confirm Reservation
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const startInput = document.getElementById("start_time");
+    const endInput = document.getElementById("end_time");
+
+    // Ensure fields are editable
+    startInput.removeAttribute("readonly");
+    endInput.removeAttribute("readonly");
+
+    // Parking lot hours
+    const openHour = "{{ parking_lot.opening_time|time:'H:i' }}";
+    const closeHour = "{{ parking_lot.closing_time|time:'H:i' }}";
+
+    const now = new Date();
+    const today = now.toISOString().split("T")[0];
+
+    // Set default values but not restrictive limits
+    startInput.value = today + "T" + openHour;
+    endInput.value = today + "T" + closeHour;
+
+    // Auto-adjust end time when start time changes
+    startInput.addEventListener("change", function () {
+        if (startInput.value) {
+            const start = new Date(startInput.value);
+            const end = new Date(start.getTime() + 60 * 60 * 1000); // +1 hour
+            endInput.value = end.toISOString().slice(0,16);
+        }
+    });
+});
+</script>
+{% endblock %}

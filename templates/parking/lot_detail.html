@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ parking_lot.name }} - UniPark{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'parking:home' %}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'parking:search_parking' %}">Parking Search</a></li>
+                    <li class="breadcrumb-item active">{{ parking_lot.name }}</li>
+                </ol>
+            </nav>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h1>{{ parking_lot.name }}</h1>
+                            <p class="text-muted">
+                                <i class="bi bi-geo-alt"></i> {{ parking_lot.address }}
+                            </p>
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <span class="availability-indicator 
+                                    {% if parking_lot.available_spots > 10 %}available
+                                    {% elif parking_lot.available_spots > 3 %}limited
+                                    {% else %}full{% endif %}">
+                                </span>
+                                <span>{{ parking_lot.available_spots }} of {{ parking_lot.total_spots }} spots available</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="mb-3">
+                                <h3 class="text-success mb-0">${{ parking_lot.hourly_rate }}/hour</h3>
+                                <p class="text-muted small mb-0">${{ parking_lot.daily_rate }}/day • ${{ parking_lot.monthly_rate }}/month</p>
+                            </div>
+                            <a href="{% url 'parking:reserve_parking' parking_lot.id %}" class="btn btn-primary btn-lg w-100">
+                                <i class="bi bi-calendar-plus"></i> Reserve Now
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4 class="mb-0">Parking Details</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Operating Hours</h6>
+                            <p>
+                                <i class="bi bi-clock"></i> 
+                                {{ parking_lot.opening_time|time:"g:i A" }} - {{ parking_lot.closing_time|time:"g:i A" }}
+                            </p>
+
+                            <h6>Features</h6>
+                            <p>
+                                {% if parking_lot.features %}
+                                    <i class="bi bi-star"></i> {{ parking_lot.features }}
+                                {% else %}
+                                    <span class="text-muted">No additional features listed</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Availability</h6>
+                            <p>
+                                <span class="badge bg-{% if parking_lot.available_spots > 10 %}success{% elif parking_lot.available_spots > 3 %}warning{% else %}danger{% endif %}">
+                                    {{ parking_lot.available_spots }} spots free
+                                </span>
+                            </p>
+
+                            <h6>Status</h6>
+                            <p>
+                                {% if parking_lot.is_open %}
+                                    <span class="badge bg-success">Open Now</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Closed</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Info</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Hourly Rate:</span>
+                        <span class="h5 text-success mb-0">${{ parking_lot.hourly_rate }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Daily Rate:</span>
+                        <span class="h5 text-success mb-0">${{ parking_lot.daily_rate }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Monthly Rate:</span>
+                        <span class="h5 text-success mb-0">${{ parking_lot.monthly_rate }}</span>
+                    </div>
+                    <hr>
+                    <div class="text-center">
+                        <a href="{% url 'parking:reserve_parking' parking_lot.id %}" class="btn btn-primary w-100 mb-2">
+                            <i class="bi bi-calendar-plus"></i> Reserve Now
+                        </a>
+                        <button class="btn btn-outline-secondary w-100" onclick="alert('Share feature coming soon!')">
+                            <i class="bi bi-share"></i> Share Location
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
