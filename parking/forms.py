@@ -174,11 +174,11 @@ class ReservationForm(forms.ModelForm):
         widgets = {
             'start_time': forms.DateTimeInput(
                 attrs={'type': 'datetime-local', 'class': 'form-control', 'step': 300},
-                format='%Y-%m-%dT%I:%M'  # 12-hour format
+                format='%Y-%m-%dT%H:%M'  
             ),
             'end_time': forms.DateTimeInput(
                 attrs={'type': 'datetime-local', 'class': 'form-control', 'step': 300},
-                format='%Y-%m-%dT%I:%M'  # 12-hour format
+                format='%Y-%m-%dT%H:%M' 
             ),
         }
 
@@ -186,4 +186,4 @@ class ReservationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Ensure the format is accepted properly
         for field in ['start_time', 'end_time']:
-            self.fields[field].input_formats = ['%Y-%m-%dT%I:%M']
+            self.fields[field].input_formats = ['%Y-%m-%dT%H:%M']

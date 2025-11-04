@@ -259,7 +259,11 @@ def reserve_parking(request, parking_lot_id):
 
         parking_lot.available_spots -= 1
         parking_lot.save()
-        messages.success(request, f'Reservation confirmed from {start_time.strftime("%I:%M %p")} to {end_time.strftime("%I:%M %p")}.')
+        messages.success(
+            request,
+            f'Reservation confirmed from {start_time.strftime("%I:%M %p")} to {end_time.strftime("%I:%M %p")}. '
+            f'Total cost: ${total_cost:.2f}.'
+        )
         return redirect('parking:dashboard')
 
     return render(request, 'parking/reserve.html', {'parking_lot': parking_lot, 'vehicles': vehicles})

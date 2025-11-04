@@ -1,97 +1,77 @@
 {% extends 'base.html' %}
-{% block title %}Reserve a Spot at {{ parking_lot.name }}{% endblock %}
+{% block title %}Reserve a Spot{% endblock %}
 
 {% block content %}
 <div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-6 col-md-8">
+  <div class="card p-4 shadow-sm">
+    <h3 class="text-primary mb-4 text-center">
+      Reserve a Spot at Hamra Street Parking
+    </h3>
+    <p class="text-muted text-center">
+      Please select your vehicle and reservation time below. Operating hours are from
+      <strong>5:00 AM to 1:00 AM</strong>.
+    </p>
 
-            <a href="{% url 'parking:parking_lot_detail' parking_lot.id %}" class="btn btn-outline-secondary mb-4">
-                <i class="bi bi-arrow-left"></i> Back to Details
-            </a>
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label for="vehicle" class="form-label">Select Vehicle</label>
+        <select id="vehicle" name="vehicle" class="form-select">
+          <option value="">-- Choose your vehicle --</option>
+          {% for vehicle in vehicles %}
+            <option value="{{ vehicle.id }}">{{ vehicle.license_plate }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-            <div class="card shadow-sm border-0">
-                <div class="card-body p-4">
-                    <h2 class="text-center mb-4 text-primary">Reserve a Spot at {{ parking_lot.name }}</h2>
-
-                    <p class="text-center text-muted mb-4">
-                        Please select your vehicle and reservation time below. 
-                        Operating hours are from 
-                        <strong>{{ parking_lot.opening_time|time:"g:i A" }}</strong> 
-                        to 
-                        <strong>{{ parking_lot.closing_time|time:"g:i A" }}</strong>.
-                    </p>
-
-                    <form method="POST" 
-                          action="{% url 'parking:reserve_parking' parking_lot.id %}" 
-                          class="needs-validation" novalidate>
-                        {% csrf_token %}
-
-                        <div class="mb-3">
-                            <label for="vehicle" class="form-label fw-semibold">Select Vehicle</label>
-                            <select class="form-select" id="vehicle" name="vehicle" required>
-                                <option value="" selected disabled>-- Choose your vehicle --</option>
-                                {% for vehicle in vehicles %}
-                                    <option value="{{ vehicle.id }}">
-                                        {{ vehicle.make }} {{ vehicle.model }} ({{ vehicle.license_plate }})
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="start_time" class="form-label fw-semibold">Start Time (with AM/PM)</label>
-                            <input type="datetime-local" class="form-control" id="start_time" name="start_time" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="end_time" class="form-label fw-semibold">End Time (with AM/PM)</label>
-                            <input type="datetime-local" class="form-control" id="end_time" name="end_time" required>
-                        </div>
-
-                        <div class="alert alert-info mt-3" role="alert">
-                            <strong>Hourly Rate:</strong> ${{ parking_lot.hourly_rate }} <br>
-                            <strong>Available Spots:</strong> {{ parking_lot.available_spots }} of {{ parking_lot.total_spots }}
-                        </div>
-
-                        <button type="submit" class="btn btn-primary w-100 py-2">
-                            <i class="bi bi-calendar-check"></i> Confirm Reservation
-                        </button>
-                    </form>
-                </div>
-            </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="start_time" class="form-label">Start Time (with AM/PM)</label>
+          <input type="datetime-local" id="start_time" name="start_time" class="form-control">
         </div>
-    </div>
+        <div class="col-md-6 mb-3">
+          <label for="end_time" class="form-label">End Time (with AM/PM)</label>
+          <input type="datetime-local" id="end_time" name="end_time" class="form-control">
+        </div>
+      </div>
+
+      <div class="alert alert-info">
+        <strong>Hourly Rate:</strong> $<span id="hourly-rate">{{ parking_lot.hourly_rate }}</span>
+        <strong>Available Spots:</strong> 10 of 80<br>
+        <strong>Total Price:</strong> $<span id="total-price">0.00</span>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100 mt-3">Confirm Reservation</button>
+    </form>
+  </div>
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const startInput = document.getElementById("start_time");
-    const endInput = document.getElementById("end_time");
+document.addEventListener("DOMContentLoaded", function() {
+  const startInput = document.getElementById("start_time");
+  const endInput = document.getElementById("end_time");
+  const hourlyRateElement = document.getElementById("hourly-rate");
+  const totalPriceElement = document.getElementById("total-price");
+  
+  const hourlyRate = parseFloat(hourlyRateElement.textContent);
 
-    // Ensure fields are editable
-    startInput.removeAttribute("readonly");
-    endInput.removeAttribute("readonly");
 
-    // Parking lot hours
-    const openHour = "{{ parking_lot.opening_time|time:'H:i' }}";
-    const closeHour = "{{ parking_lot.closing_time|time:'H:i' }}";
+  function calculateTotal() {
+    const start = new Date(startInput.value);
+    const end = new Date(endInput.value);
+    const hourlyRate = parseFloat(hourlyRateElement.textContent);
 
-    const now = new Date();
-    const today = now.toISOString().split("T")[0];
+    if (!isNaN(start) && !isNaN(end) && end > start) {
+      const hours = (end - start) / (1000 * 60 * 60);
+      const total = hours * hourlyRate;
+      totalPriceElement.textContent = total.toFixed(2);
+    } else {
+      totalPriceElement.textContent = "0.00";
+    }
+  }
 
-    // Set default values but not restrictive limits
-    startInput.value = today + "T" + openHour;
-    endInput.value = today + "T" + closeHour;
-
-    // Auto-adjust end time when start time changes
-    startInput.addEventListener("change", function () {
-        if (startInput.value) {
-            const start = new Date(startInput.value);
-            const end = new Date(start.getTime() + 60 * 60 * 1000); // +1 hour
-            endInput.value = end.toISOString().slice(0,16);
-        }
-    });
+  startInput.addEventListener("change", calculateTotal);
+  endInput.addEventListener("change", calculateTotal);
 });
 </script>
 {% endblock %}
