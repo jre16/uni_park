@@ -1,0 +1,23 @@
+:root {
+  --font-scale: 1.0;
+  --fg: #1a1a1a;
+  --bg: #ffffff;
+  --primary: #0a66c2;
+}
+
+html {
+  font-size: calc(16px * var(--font-scale));
+  color: var(--fg);
+  background: var(--bg);
+}
+
+html.theme-hc {
+  --fg: #000;
+  --bg: #fff;
+  --primary: #000;
+}
+
+button:focus, a:focus, input:focus {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
