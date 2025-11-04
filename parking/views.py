@@ -13,6 +13,8 @@ import random
 import string
 from datetime import datetime
 from decimal import Decimal
+from datetime import timedelta
+from django.utils import timezone
 
 from .models import StudentProfile, Vehicle, ParkingLot, Reservation
 from .forms import StudentSignupForm, StudentLoginForm, VehicleForm, ParkingLotSearchForm
@@ -307,3 +309,22 @@ def get_nearby_parking(request):
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+def cancel_reservation(request, reservation_id):
+    reservation = get_object_or_404(Reservation, id=reservation_id, student=request.user.studentprofile)
+    now = timezone.now()
+
+    if reservation.start_time - now < timedelta(hours=1):
+        messages.error(request, "Cancellation period has expired. You can no longer cancel this reservation.")
+        return redirect('parking:dashboard')
+
+    reservation.status = 'cancelled'
+    reservation.save()
+
+    parking_lot = reservation.parking_lot
+    parking_lot.available_spots += 1
+    parking_lot.save()
+
+    messages.success(request, f"Reservation at {parking_lot.name} cancelled successfully.")
+    return redirect('parking:dashboard')

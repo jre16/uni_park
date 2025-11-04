@@ -19,4 +19,5 @@ urlpatterns = [
     path('parking-lot/<int:parking_lot_id>/', views.parking_lot_detail, name='parking_lot_detail'),
     path('api/nearby-parking/', views.get_nearby_parking, name='get_nearby_parking'),
     path('reserve/<int:parking_lot_id>/', views.reserve_parking, name='reserve_parking'),
+    path('cancel/<int:reservation_id>/', views.cancel_reservation, name='cancel_reservation'),
 ]
