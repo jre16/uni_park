@@ -127,13 +127,21 @@ def user_login(request):
 def dashboard(request):
     student_profile = request.user.studentprofile
     vehicles = student_profile.vehicles.all()
-    recent_reservations = Reservation.objects.filter(student=student_profile).order_by('-created_at')[:5]
+    recent_reservations = Reservation.objects.filter(student=student_profile).order_by('-created_at')
+
+    now = timezone.now()
+    for reservation in recent_reservations:
+        if reservation.status == 'confirmed' and reservation.end_time < now:
+            reservation.status = 'completed'
+            reservation.save()
+
     context = {
         'student': student_profile,
         'vehicles': vehicles,
         'recent_reservations': recent_reservations
     }
     return render(request, 'parking/dashboard.html', context)
+
 
 
 @login_required
