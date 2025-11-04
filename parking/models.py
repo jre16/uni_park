@@ -1,7 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from io import BytesIO
+from django.core.files import File
+from django.urls import reverse
 import re
+import qrcode
 
 
 class StudentProfile(models.Model):
@@ -101,8 +105,26 @@ class Reservation(models.Model):
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     total_cost = models.DecimalField(max_digits=8, decimal_places=2)
-    qr_code = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.student.user.username} - {self.parking_lot.name}"
+    
+    qr_code = models.ImageField(upload_to='qr_codes/', blank=True, null=True)
+    checked_in = models.BooleanField(default=False)
+
+    def generate_qr_code(self):
+        import qrcode
+        from io import BytesIO
+        from django.core.files import File
+        from django.conf import settings
+
+        check_in_url = reverse('parking:check_in', args=[self.id])
+        full_url = f"http://127.0.0.1:8000{check_in_url}"  # Change to your domain
+
+        # Generate the QR code image
+        qr = qrcode.make(full_url)
+        buffer = BytesIO()
+        qr.save(buffer, format='PNG')
+        self.qr_code.save(f"reservation_{self.id}.png", File(buffer), save=False)
+        buffer.close()

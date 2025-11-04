@@ -8,6 +8,8 @@ from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views import View
+from django.http import HttpResponse
+from django.urls import reverse
 import json
 import random
 import string
@@ -249,7 +251,7 @@ def reserve_parking(request, parking_lot_id):
         total_cost = Decimal(duration_hours) * parking_lot.hourly_rate
 
         vehicle = get_object_or_404(Vehicle, id=vehicle_id, student=student_profile)
-        Reservation.objects.create(
+        reservation = Reservation.objects.create(
             student=student_profile,
             vehicle=vehicle,
             parking_lot=parking_lot,
@@ -258,6 +260,9 @@ def reserve_parking(request, parking_lot_id):
             total_cost=total_cost,
             status='confirmed'
         )
+
+        reservation.generate_qr_code()
+        reservation.save()
 
         parking_lot.available_spots -= 1
         parking_lot.save()
@@ -327,4 +332,16 @@ def cancel_reservation(request, reservation_id):
     parking_lot.save()
 
     messages.success(request, f"Reservation at {parking_lot.name} cancelled successfully.")
+    return redirect('parking:dashboard')
+
+
+@login_required
+def check_in(request, reservation_id):
+    reservation = get_object_or_404(Reservation, id=reservation_id)
+    if reservation.checked_in:
+        messages.info(request, "You’ve already checked in.")
+    else:
+        reservation.checked_in = True
+        reservation.save()
+        messages.success(request, f"Checked in successfully for {reservation.parking_lot.name}!")
     return redirect('parking:dashboard')
