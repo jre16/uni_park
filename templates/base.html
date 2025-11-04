@@ -553,6 +553,38 @@
                 &copy; UniPark. Simplifying parking for AUB students.
             </p>
         </div>
+        <div id="a11y-controls" style="display:flex;gap:10px;align-items:center;margin:10px;">
+  <label>Text size:
+    <select id="fontScale">
+      <option value="1.0">Default</option>
+      <option value="1.25">Large</option>
+      <option value="1.5">Extra Large</option>
+    </select>
+  </label>
+  <label>
+    <input type="checkbox" id="highContrast"> High contrast
+  </label>
+</div>
+
+<script>
+const fontSel = document.getElementById('fontScale');
+const hc = document.getElementById('highContrast');
+const savedScale = localStorage.getItem('fontScale') || '1.0';
+const savedHC = localStorage.getItem('highContrast') === 'true';
+fontSel.value = savedScale; hc.checked = savedHC;
+document.documentElement.style.setProperty('--font-scale', savedScale);
+document.documentElement.classList.toggle('theme-hc', savedHC);
+
+fontSel.addEventListener('change', () => {
+  localStorage.setItem('fontScale', fontSel.value);
+  document.documentElement.style.setProperty('--font-scale', fontSel.value);
+});
+hc.addEventListener('change', () => {
+  localStorage.setItem('highContrast', hc.checked);
+  document.documentElement.classList.toggle('theme-hc', hc.checked);
+});
+</script>
+
     </footer>
     
     <!-- Bootstrap JS -->
