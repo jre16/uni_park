@@ -23,6 +23,29 @@
         </div>
     </div>
     
+    <!-- Subscription Banner -->
+    {% if not student.studentsubscription_set.filter.exists %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-primary border-0">
+                <div class="card-body text-center py-4" style="background: linear-gradient(135deg, var(--purple-bg), var(--purple-light));">
+                    <div class="row align-items-center">
+                        <div class="col-md-8 text-md-start text-white">
+                            <h3 class="mb-2">🌟 Unlock Premium Parking Benefits</h3>
+                            <p class="mb-0">Subscribe to a monthly plan and enjoy reserved spots, discounted rates, and exclusive perks!</p>
+                        </div>
+                        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                            <a href="{% url 'parking:subscription_plans' %}" class="btn btn-light btn-lg">
+                                <i class="bi bi-star-fill text-warning"></i> View Plans
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Quick Stats -->
     <div class="row mb-4">
         <div class="col-md-3 mb-3">
@@ -46,9 +69,18 @@
         <div class="col-md-3 mb-3">
             <div class="card">
                 <div class="card-body text-center">
-                    <i class="bi bi-currency-dollar text-warning" style="font-size: 2rem;"></i>
-                    <h3 class="mt-2 mb-0">$0.00</h3>
-                    <p class="text-muted small mb-0">This Month</p>
+                    <i class="bi bi-star-fill text-warning" style="font-size: 2rem;"></i>
+                    {% with active_sub=student.studentsubscription_set.filter.first %}
+                    {% if active_sub %}
+                        <h3 class="mt-2 mb-0">{{ active_sub.plan.name }}</h3>
+                        <p class="text-muted small mb-0">Active Plan until {{ active_sub.end_date|date:"M j, Y" }}</p>
+                    {% else %}
+                        <h3 class="mt-2 mb-0">No Active Plan</h3>
+                        <p class="text-muted small mb-0">
+                            <a href="{% url 'parking:subscription_plans' %}" class="text-primary"><i class="bi bi-plus-circle"></i> Subscribe Now</a>
+                        </p>
+                    {% endif %}
+                    {% endwith %}
                 </div>
             </div>
         </div>

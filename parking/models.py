@@ -1,7 +1,85 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.utils import timezone
+from datetime import timedelta
 import re
+
+
+class SubscriptionPlan(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+    price = models.DecimalField(max_digits=8, decimal_places=2)
+    features = models.TextField()
+    perks = models.JSONField(default=list)  # Store perks as a list of dictionaries
+    color_theme = models.CharField(max_length=50, default='primary')  # For UI styling
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} (${self.price}/month)"
+
+
+class StudentSubscription(models.Model):
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('grace_period', 'Grace Period'),
+        ('paused', 'Paused'),
+        ('cancelled', 'Cancelled'),
+        ('expired', 'Expired'),
+    ]
+
+    student = models.ForeignKey('StudentProfile', on_delete=models.CASCADE)
+    plan = models.ForeignKey(SubscriptionPlan, on_delete=models.PROTECT)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    auto_renew = models.BooleanField(default=True)
+    grace_period_end = models.DateTimeField(null=True, blank=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        if self.end_date <= self.start_date:
+            raise ValidationError("End date must be after start date")
+        if self.grace_period_end and self.grace_period_end <= self.end_date:
+            raise ValidationError("Grace period must extend beyond subscription end date")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def is_valid(self):
+        now = timezone.now()
+        if self.status == 'active':
+            return now <= self.end_date
+        elif self.status == 'grace_period':
+            return now <= self.grace_period_end if self.grace_period_end else False
+        return False
+
+    def enter_grace_period(self, days=7):
+        if self.status == 'active' and self.end_date <= timezone.now():
+            self.status = 'grace_period'
+            self.grace_period_end = self.end_date + timedelta(days=days)
+            self.save()
+
+    def cancel(self):
+        if self.status in ['active', 'grace_period']:
+            self.status = 'cancelled'
+            self.cancelled_at = timezone.now()
+            self.auto_renew = False
+            self.save()
+
+    def reactivate(self):
+        if self.status in ['paused', 'cancelled'] and timezone.now() <= self.end_date:
+            self.status = 'active'
+            self.cancelled_at = None
+            self.save()
+
+    def __str__(self):
+        return f"{self.student.user.username}'s {self.plan.name} Subscription ({self.status})"
 
 
 class StudentProfile(models.Model):
@@ -94,6 +172,11 @@ class Reservation(models.Model):
         ('cancelled', 'Cancelled'),
     ]
 
+    PAYMENT_TYPE_CHOICES = [
+        ('one_time', 'One-time Payment'),
+        ('subscription', 'Subscription'),
+    ]
+
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
     parking_lot = models.ForeignKey(ParkingLot, on_delete=models.CASCADE)
@@ -101,8 +184,25 @@ class Reservation(models.Model):
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     total_cost = models.DecimalField(max_digits=8, decimal_places=2)
+    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE_CHOICES, default='one_time')
+    subscription = models.ForeignKey(StudentSubscription, on_delete=models.SET_NULL, null=True, blank=True)
     qr_code = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        super().clean()
+        if self.payment_type == 'subscription':
+            if not self.subscription:
+                raise ValidationError("Subscription is required for subscription-based reservations")
+            if not self.subscription.is_valid():
+                raise ValidationError("Subscription is not active or has expired")
+
+    def save(self, *args, **kwargs):
+        if self.payment_type == 'subscription':
+            # No cost for subscription-based reservations
+            self.total_cost = 0
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.student.user.username} - {self.parking_lot.name}"

@@ -1,6 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
+from . import subscription_views
 
 app_name = 'parking'
 
@@ -19,4 +20,11 @@ urlpatterns = [
     path('parking-lot/<int:parking_lot_id>/', views.parking_lot_detail, name='parking_lot_detail'),
     path('api/nearby-parking/', views.get_nearby_parking, name='get_nearby_parking'),
     path('reserve/<int:parking_lot_id>/', views.reserve_parking, name='reserve_parking'),
+    
+    # Subscription URLs
+    path('subscriptions/', subscription_views.subscription_plans, name='subscription_plans'),
+    path('subscriptions/subscribe/<int:plan_id>/', subscription_views.subscribe, name='subscribe'),
+    path('subscriptions/<int:subscription_id>/', subscription_views.subscription_details, name='subscription_details'),
+    path('subscriptions/<int:subscription_id>/cancel/', subscription_views.cancel_subscription, name='cancel_subscription'),
+    path('subscriptions/history/', subscription_views.subscription_history, name='subscription_history'),
 ]

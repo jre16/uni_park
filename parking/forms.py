@@ -2,7 +2,8 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.validators import RegexValidator
-from .models import StudentProfile, Vehicle, ParkingLot, Reservation
+from django.utils import timezone
+from .models import StudentProfile, Vehicle, ParkingLot, Reservation, SubscriptionPlan, StudentSubscription
 import re
 
 class StudentSignupForm(UserCreationForm):
@@ -170,7 +171,7 @@ class ParkingLotSearchForm(forms.Form):
 class ReservationForm(forms.ModelForm):
     class Meta:
         model = Reservation
-        fields = ['vehicle', 'start_time', 'end_time']
+        fields = ['vehicle', 'start_time', 'end_time', 'payment_type', 'subscription']
         widgets = {
             'start_time': forms.DateTimeInput(
                 attrs={'type': 'datetime-local', 'class': 'form-control', 'step': 300},
@@ -180,10 +181,98 @@ class ReservationForm(forms.ModelForm):
                 attrs={'type': 'datetime-local', 'class': 'form-control', 'step': 300},
                 format='%Y-%m-%dT%I:%M'  # 12-hour format
             ),
+            'payment_type': forms.Select(attrs={
+                'class': 'form-select',
+                'onchange': 'toggleSubscriptionField(this.value)'
+            }),
+            'subscription': forms.Select(attrs={
+                'class': 'form-select'
+            })
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, student=None, **kwargs):
         super().__init__(*args, **kwargs)
         # Ensure the format is accepted properly
         for field in ['start_time', 'end_time']:
             self.fields[field].input_formats = ['%Y-%m-%dT%I:%M']
+        
+        # Only show active subscriptions for the current student
+        if student:
+            self.fields['subscription'].queryset = StudentSubscription.objects.filter(
+                student=student,
+                status__in=['active', 'grace_period'],
+                end_date__gt=timezone.now()
+            )
+        else:
+            self.fields['subscription'].queryset = StudentSubscription.objects.none()
+        
+        # Make subscription optional but required if payment_type is subscription
+        self.fields['subscription'].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        payment_type = cleaned_data.get('payment_type')
+        subscription = cleaned_data.get('subscription')
+
+        if payment_type == 'subscription':
+            if not subscription:
+                raise forms.ValidationError("Please select a valid subscription")
+            if not subscription.is_valid():
+                raise forms.ValidationError("Selected subscription is not active or has expired")
+        return cleaned_data
+
+
+class SubscriptionPlanForm(forms.ModelForm):
+    class Meta:
+        model = SubscriptionPlan
+        fields = ['name', 'description', 'price', 'features', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., Student Basic Monthly'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Plan benefits and terms...'
+            }),
+            'price': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Monthly price',
+                'step': '0.01'
+            }),
+            'features': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'List of features, one per line'
+            }),
+            'is_active': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            })
+        }
+
+
+class SubscriptionForm(forms.ModelForm):
+    class Meta:
+        model = StudentSubscription
+        fields = ['plan', 'auto_renew']
+        widgets = {
+            'plan': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'auto_renew': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            })
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Only show active plans in the dropdown
+        self.fields['plan'].queryset = SubscriptionPlan.objects.filter(is_active=True)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        plan = cleaned_data.get('plan')
+        if plan and not plan.is_active:
+            raise forms.ValidationError("Selected plan is no longer available")
+        return cleaned_data

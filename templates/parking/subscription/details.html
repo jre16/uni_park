@@ -1,0 +1,126 @@
+{% extends 'parking/subscription/base.html' %}
+
+{% block subscription_title %}Subscription Details{% endblock %}
+{% block subscription_subtitle %}Manage your {{ subscription.plan.name }} subscription{% endblock %}
+
+{% block subscription_actions %}
+<div>
+    <a href="{% url 'parking:subscription_plans' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Plans
+    </a>
+</div>
+{% endblock %}
+
+{% block subscription_content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Subscription Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <p class="mb-1"><strong>Plan:</strong> {{ subscription.plan.name }}</p>
+                        <p class="mb-1"><strong>Monthly Cost:</strong> ${{ subscription.plan.price }}</p>
+                        <p class="mb-1">
+                            <strong>Status:</strong>
+                            <span class="badge bg-{{ subscription.status|yesno:'success,warning,danger' }}">
+                                {{ subscription.status|title }}
+                            </span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1"><strong>Start Date:</strong> {{ subscription.start_date|date:"M d, Y" }}</p>
+                        <p class="mb-1"><strong>End Date:</strong> {{ subscription.end_date|date:"M d, Y" }}</p>
+                        {% if subscription.grace_period_end %}
+                            <p class="mb-1"><strong>Grace Period Until:</strong> {{ subscription.grace_period_end|date:"M d, Y" }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <h6 class="mb-3">Plan Features:</h6>
+                <ul class="list-unstyled">
+                    {% for feature in subscription.plan.features.split %}
+                    <li><i class="bi bi-check-circle text-success"></i> {{ feature }}</li>
+                    {% endfor %}
+                </ul>
+
+                {% if subscription.status == 'active' %}
+                <div class="form-check mt-4">
+                    <form method="post" action="{% url 'parking:subscription_auto_renew' subscription.id %}">
+                        {% csrf_token %}
+                        <input type="checkbox" class="form-check-input" id="autoRenew" 
+                               name="auto_renew" {% if subscription.auto_renew %}checked{% endif %}
+                               onchange="this.form.submit()">
+                        <label class="form-check-label" for="autoRenew">
+                            Auto-renew subscription
+                        </label>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if subscription.status == 'active' %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Cancel Subscription</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">
+                    If you cancel now, you'll still have access until {{ subscription.end_date|date:"M d, Y" }}.
+                    After that, you can still use pay-as-you-go parking.
+                </p>
+                <form method="post" action="{% url 'parking:cancel_subscription' subscription.id %}"
+                      onsubmit="return confirm('Are you sure you want to cancel your subscription?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-x-circle"></i> Cancel Subscription
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'parking:search_parking' %}" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Find Parking
+                    </a>
+                    {% if subscription.status == 'active' %}
+                    <a href="{% url 'parking:subscription_history' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-clock-history"></i> View History
+                    </a>
+                    {% else %}
+                    <a href="{% url 'parking:subscription_plans' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-up-circle"></i> Upgrade Plan
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if subscription.status == 'active' %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Next Payment</h5>
+            </div>
+            <div class="card-body">
+                {% if subscription.auto_renew %}
+                <p class="mb-2">Your next payment of ${{ subscription.plan.price }} will be on {{ subscription.end_date|date:"M d, Y" }}.</p>
+                {% else %}
+                <p class="mb-2">Auto-renewal is disabled. Your subscription will end on {{ subscription.end_date|date:"M d, Y" }}.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

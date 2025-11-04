@@ -5,7 +5,7 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'unipark.settings')
 django.setup()
 
-from parking.models import ParkingLot
+from parking.models import ParkingLot, SubscriptionPlan
 from datetime import time
 
 def create_sample_parking_lots():
@@ -141,5 +141,69 @@ def create_sample_parking_lots():
     
     print(f"\nSample data creation complete! Created {len(parking_lots)} parking lots.")
 
+def create_sample_subscription_plans():
+    """Create sample subscription plans"""
+    
+    plans = [
+        {
+            'name': 'Student Basic',
+            'description': 'Perfect for occasional campus parking',
+            'price': 49.99,
+            'features': '''
+                Up to 30 hours of parking per month
+                Access to all student lots
+                Mobile app access
+                24/7 support
+            ''',
+            'is_active': True,
+        },
+        {
+            'name': 'Student Plus',
+            'description': 'Ideal for regular commuters',
+            'price': 89.99,
+            'features': '''
+                Unlimited parking hours
+                Access to all student lots
+                Reserved spot guarantee
+                Mobile app access
+                24/7 support
+                EV charging access
+            ''',
+            'is_active': True,
+        },
+        {
+            'name': 'Student Premium',
+            'description': 'The ultimate parking experience',
+            'price': 149.99,
+            'features': '''
+                Unlimited parking hours
+                Access to ALL parking lots
+                Premium reserved spots
+                Mobile app access
+                24/7 priority support
+                EV charging access
+                Valet service
+                Car wash credits
+            ''',
+            'is_active': True,
+        }
+    ]
+    
+    print("Creating sample subscription plans...")
+    
+    for plan_data in plans:
+        plan, created = SubscriptionPlan.objects.get_or_create(
+            name=plan_data['name'],
+            defaults=plan_data
+        )
+        
+        if created:
+            print(f"[+] Created: {plan.name}")
+        else:
+            print(f"[!] Already exists: {plan.name}")
+    
+    print(f"\nSample subscription plans creation complete! Created {len(plans)} plans.")
+
 if __name__ == '__main__':
     create_sample_parking_lots()
+    create_sample_subscription_plans()

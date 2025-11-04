@@ -1,0 +1,60 @@
+{% extends 'parking/subscription/base.html' %}
+
+{% block subscription_title %}Subscription History{% endblock %}
+{% block subscription_subtitle %}View your past and current subscriptions{% endblock %}
+
+{% block subscription_actions %}
+<div>
+    <a href="{% url 'parking:subscription_plans' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Plans
+    </a>
+</div>
+{% endblock %}
+
+{% block subscription_content %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Plan</th>
+                        <th>Status</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Price</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in subscriptions %}
+                    <tr>
+                        <td>{{ sub.plan.name }}</td>
+                        <td>
+                            <span class="badge bg-{{ sub.status|yesno:'success,warning,danger' }}">
+                                {{ sub.status|title }}
+                            </span>
+                        </td>
+                        <td>{{ sub.start_date|date:"M d, Y" }}</td>
+                        <td>{{ sub.end_date|date:"M d, Y" }}</td>
+                        <td>${{ sub.plan.price }}</td>
+                        <td>
+                            <a href="{% url 'parking:subscription_details' sub.id %}" 
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> View Details
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <p class="text-muted mb-0">No subscription history found</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
