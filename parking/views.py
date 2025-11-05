@@ -8,11 +8,15 @@ from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views import View
+from django.http import HttpResponse
+from django.urls import reverse
 import json
 import random
 import string
 from datetime import datetime
 from decimal import Decimal
+from datetime import timedelta
+from django.utils import timezone
 
 from .models import StudentProfile, Vehicle, ParkingLot, Reservation
 from .forms import StudentSignupForm, StudentLoginForm, VehicleForm, ParkingLotSearchForm
@@ -123,13 +127,21 @@ def user_login(request):
 def dashboard(request):
     student_profile = request.user.studentprofile
     vehicles = student_profile.vehicles.all()
-    recent_reservations = Reservation.objects.filter(student=student_profile).order_by('-created_at')[:5]
+    recent_reservations = Reservation.objects.filter(student=student_profile).order_by('-created_at')
+
+    now = timezone.now()
+    for reservation in recent_reservations:
+        if reservation.status == 'confirmed' and reservation.end_time < now:
+            reservation.status = 'completed'
+            reservation.save()
+
     context = {
         'student': student_profile,
         'vehicles': vehicles,
         'recent_reservations': recent_reservations
     }
     return render(request, 'parking/dashboard.html', context)
+
 
 
 @login_required
@@ -247,7 +259,7 @@ def reserve_parking(request, parking_lot_id):
         total_cost = Decimal(duration_hours) * parking_lot.hourly_rate
 
         vehicle = get_object_or_404(Vehicle, id=vehicle_id, student=student_profile)
-        Reservation.objects.create(
+        reservation = Reservation.objects.create(
             student=student_profile,
             vehicle=vehicle,
             parking_lot=parking_lot,
@@ -257,9 +269,16 @@ def reserve_parking(request, parking_lot_id):
             status='confirmed'
         )
 
+        reservation.generate_qr_code()
+        reservation.save()
+
         parking_lot.available_spots -= 1
         parking_lot.save()
-        messages.success(request, f'Reservation confirmed from {start_time.strftime("%I:%M %p")} to {end_time.strftime("%I:%M %p")}.')
+        messages.success(
+            request,
+            f'Reservation confirmed from {start_time.strftime("%I:%M %p")} to {end_time.strftime("%I:%M %p")}. '
+            f'Total cost: ${total_cost:.2f}.'
+        )
         return redirect('parking:dashboard')
 
     return render(request, 'parking/reserve.html', {'parking_lot': parking_lot, 'vehicles': vehicles})
@@ -303,3 +322,34 @@ def get_nearby_parking(request):
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+def cancel_reservation(request, reservation_id):
+    reservation = get_object_or_404(Reservation, id=reservation_id, student=request.user.studentprofile)
+    now = timezone.now()
+
+    if reservation.start_time - now < timedelta(hours=1):
+        messages.error(request, "Cancellation period has expired. You can no longer cancel this reservation.")
+        return redirect('parking:dashboard')
+
+    reservation.status = 'cancelled'
+    reservation.save()
+
+    parking_lot = reservation.parking_lot
+    parking_lot.available_spots += 1
+    parking_lot.save()
+
+    messages.success(request, f"Reservation at {parking_lot.name} cancelled successfully.")
+    return redirect('parking:dashboard')
+
+
+@login_required
+def check_in(request, reservation_id):
+    reservation = get_object_or_404(Reservation, id=reservation_id)
+    if reservation.checked_in:
+        messages.info(request, "You’ve already checked in.")
+    else:
+        reservation.checked_in = True
+        reservation.save()
+        messages.success(request, f"Checked in successfully for {reservation.parking_lot.name}!")
+    return redirect('parking:dashboard')
