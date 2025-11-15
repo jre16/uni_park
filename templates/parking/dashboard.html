@@ -44,78 +44,6 @@
             </div>
         </div>
     </div>
-    
-                                <!-- Refund Modal (UI-only) -->
-                                <div class="modal fade" id="refundModal" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">Request Refund</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="alert alert-warning small" role="alert">
-                                                    Refunds are handled as per policy. This is a demo UI only.
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label">Reason</label>
-                                                    <select id="refundReason" class="form-select">
-                                                        <option value="change_of_plans">Change of plans</option>
-                                                        <option value="duplicate_booking">Duplicate booking</option>
-                                                        <option value="lot_closed">Lot closed or inaccessible</option>
-                                                        <option value="other">Other</option>
-                                                    </select>
-                                                </div>
-                                                <div class="mb-3 d-none" id="refundOtherWrap">
-                                                    <label class="form-label">Details</label>
-                                                    <textarea id="refundOtherText" class="form-control" rows="3" placeholder="Describe the issue"></textarea>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="button" id="submitRefund" class="btn btn-danger">Submit Request</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <script>
-                                document.addEventListener('DOMContentLoaded', function(){
-                                    const refundModalEl = document.getElementById('refundModal');
-                                    const refundReason = document.getElementById('refundReason');
-                                    const refundOtherWrap = document.getElementById('refundOtherWrap');
-                                    const submitRefund = document.getElementById('submitRefund');
-                                    let activeReservationId = null;
-
-                                    document.querySelectorAll('.refund-btn').forEach(btn => {
-                                        btn.addEventListener('click', function(){
-                                            activeReservationId = this.getAttribute('data-reservation-id');
-                                        });
-                                    });
-
-                                    refundReason.addEventListener('change', function(){
-                                        refundOtherWrap.classList.toggle('d-none', this.value !== 'other');
-                                    });
-
-                                    submitRefund.addEventListener('click', function(){
-                                        // Simulate success toast
-                                        const bsModal = bootstrap.Modal.getInstance(refundModalEl);
-                                        bsModal.hide();
-                                        const toast = document.createElement('div');
-                                        toast.className = 'toast align-items-center text-bg-success border-0 show position-fixed bottom-0 end-0 m-3';
-                                        toast.role = 'alert';
-                                        toast.innerHTML = `
-                                            <div class="d-flex">
-                                                <div class="toast-body">
-                                                    Refund request submitted for reservation #${activeReservationId}. We'll email you the outcome.
-                                                </div>
-                                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                                            </div>`;
-                                        document.body.appendChild(toast);
-                                        setTimeout(()=> toast.remove(), 5000);
-                                    });
-                                });
-                                </script>
     {% endif %}
 
     <!-- Quick Stats -->
@@ -239,7 +167,7 @@
                 <div class="card-body">
                     {% if recent_reservations %}
                         <div class="list-group list-group-flush">
-                           {% for reservation in recent_reservations %}
+                            {% for reservation in recent_reservations %}
                             <div class="list-group-item px-0">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
@@ -250,13 +178,11 @@
                                         <p class="text-muted small mb-2">
                                             {{ reservation.start_time|date:"M d, Y H:i" }}
                                         </p>
-<<<<<<< HEAD
                                         <button type="button" class="btn btn-sm btn-outline-danger refund-btn" 
                                                 data-reservation-id="{{ reservation.id }}" data-bs-toggle="modal" 
                                                 data-bs-target="#refundModal">
                                             <i class="bi bi-arrow-counterclockwise"></i> Request Refund
                                         </button>
-=======
 
                                         {% if reservation.status == 'confirmed' %}
                                             <a href="{% url 'parking:cancel_reservation' reservation.id %}" 

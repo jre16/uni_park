@@ -1,14 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-<<<<<<< HEAD
 from django.utils import timezone
 from datetime import timedelta
-=======
 from io import BytesIO
 from django.core.files import File
 from django.urls import reverse
->>>>>>> 7464572b2ec20b2a2d6425255ea0e61e92ef9e9e
 import re
 import qrcode
 
@@ -191,12 +188,8 @@ class Reservation(models.Model):
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     total_cost = models.DecimalField(max_digits=8, decimal_places=2)
-<<<<<<< HEAD
     payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE_CHOICES, default='one_time')
     subscription = models.ForeignKey(StudentSubscription, on_delete=models.SET_NULL, null=True, blank=True)
-    qr_code = models.CharField(max_length=100, blank=True, null=True)
-=======
->>>>>>> 7464572b2ec20b2a2d6425255ea0e61e92ef9e9e
     created_at = models.DateTimeField(auto_now_add=True)
 
     def clean(self):
@@ -216,16 +209,11 @@ class Reservation(models.Model):
 
     def __str__(self):
         return f"{self.student.user.username} - {self.parking_lot.name}"
-    
+
     qr_code = models.ImageField(upload_to='qr_codes/', blank=True, null=True)
     checked_in = models.BooleanField(default=False)
 
     def generate_qr_code(self):
-        import qrcode
-        from io import BytesIO
-        from django.core.files import File
-        from django.conf import settings
-
         check_in_url = reverse('parking:check_in', args=[self.id])
         full_url = f"http://127.0.0.1:8000{check_in_url}"  # Change to your domain
 
