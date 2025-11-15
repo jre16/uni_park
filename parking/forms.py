@@ -175,11 +175,11 @@ class ReservationForm(forms.ModelForm):
         widgets = {
             'start_time': forms.DateTimeInput(
                 attrs={'type': 'datetime-local', 'class': 'form-control', 'step': 300},
-                format='%Y-%m-%dT%I:%M'  # 12-hour format
+                format='%Y-%m-%dT%H:%M'  
             ),
             'end_time': forms.DateTimeInput(
                 attrs={'type': 'datetime-local', 'class': 'form-control', 'step': 300},
-                format='%Y-%m-%dT%I:%M'  # 12-hour format
+                format='%Y-%m-%dT%H:%M' 
             ),
             'payment_type': forms.Select(attrs={
                 'class': 'form-select',
@@ -267,6 +267,7 @@ class SubscriptionForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+<<<<<<< HEAD
         # Only show active plans in the dropdown
         self.fields['plan'].queryset = SubscriptionPlan.objects.filter(is_active=True)
 
@@ -276,3 +277,8 @@ class SubscriptionForm(forms.ModelForm):
         if plan and not plan.is_active:
             raise forms.ValidationError("Selected plan is no longer available")
         return cleaned_data
+=======
+        # Ensure the format is accepted properly
+        for field in ['start_time', 'end_time']:
+            self.fields[field].input_formats = ['%Y-%m-%dT%H:%M']
+>>>>>>> 7464572b2ec20b2a2d6425255ea0e61e92ef9e9e
