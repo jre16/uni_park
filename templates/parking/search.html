@@ -100,10 +100,9 @@
                                     <a href="{% url 'parking:parking_lot_detail' lot.id %}" class="btn btn-primary btn-sm flex-fill">
                                         <i class="bi bi-info-circle"></i> Details
                                     </a>
-                                    <button class="btn btn-outline-success btn-sm flex-fill reserve-btn" 
-                                            data-lot-id="{{ lot.id }}">
-                                        <i class="bi bi-calendar-plus"></i> Reserve
-                                    </button>
+                                    <a href="{% url 'parking:reserve_parking' lot.id %}" class="btn btn-outline-success btn-sm flex-fill">
+                                    <i class="bi bi-calendar-plus"></i> Reserve
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -210,14 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Handle reserve button clicks
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.reserve-btn')) {
-            const lotId = e.target.closest('.reserve-btn').getAttribute('data-lot-id');
-            // In a real application, this would redirect to a reservation form
-            alert('Reservation feature coming soon! Lot ID: ' + lotId);
-        }
-    });
+
     
     // Filter functionality (placeholder)
     const filters = document.querySelectorAll('.form-check-input');
