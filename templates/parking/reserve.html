@@ -10,6 +10,18 @@
                 <i class="bi bi-arrow-left"></i> Back to Details
             </a>
 
+            {% if parking_lot.temporarily_closed %}
+            <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+                <i class="bi bi-cone-striped me-2"></i>
+                <div>
+                    <strong>This lot is temporarily closed for new reservations.</strong>
+                    {% if parking_lot.reopen_at %}
+                        Expected to reopen at {{ parking_lot.reopen_at|date:"M d, Y g:i A" }}.
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
             <div class="card shadow-sm border-0">
                 <div class="card-body p-4">
                     <h2 class="text-center mb-4 text-primary">Reserve a Spot at {{ parking_lot.name }}</h2>
@@ -29,7 +41,7 @@
 
                         <div class="mb-3">
                             <label for="vehicle" class="form-label fw-semibold">Select Vehicle</label>
-                            <select class="form-select" id="vehicle" name="vehicle" required>
+                            <select class="form-select" id="vehicle" name="vehicle" required {% if parking_lot.temporarily_closed %}disabled{% endif %}>
                                 <option value="" selected disabled>-- Choose your vehicle --</option>
                                 {% for vehicle in vehicles %}
                                     <option value="{{ vehicle.id }}">
@@ -41,12 +53,12 @@
 
                         <div class="mb-3">
                             <label for="start_time" class="form-label fw-semibold">Start Time (with AM/PM)</label>
-                            <input type="datetime-local" class="form-control" id="start_time" name="start_time" required>
+                            <input type="datetime-local" class="form-control" id="start_time" name="start_time" required {% if parking_lot.temporarily_closed %}disabled{% endif %}>
                         </div>
 
                         <div class="mb-3">
                             <label for="end_time" class="form-label fw-semibold">End Time (with AM/PM)</label>
-                            <input type="datetime-local" class="form-control" id="end_time" name="end_time" required>
+                            <input type="datetime-local" class="form-control" id="end_time" name="end_time" required {% if parking_lot.temporarily_closed %}disabled{% endif %}>
                         </div>
 
                         <div class="alert alert-info mt-3" role="alert">
@@ -54,9 +66,15 @@
                             <strong>Available Spots:</strong> {{ parking_lot.available_spots }} of {{ parking_lot.total_spots }}
                         </div>
 
-                        <button type="button" id="proceedToPayment" class="btn btn-primary w-100 py-2" data-bs-toggle="modal" data-bs-target="#paymentModal">
-                            <i class="bi bi-credit-card"></i> Proceed to Payment
-                        </button>
+                        {% if parking_lot.temporarily_closed %}
+                            <button type="button" class="btn btn-outline-secondary w-100 py-2" disabled>
+                                <i class="bi bi-slash-circle"></i> Temporarily Closed
+                            </button>
+                        {% else %}
+                            <button type="button" id="proceedToPayment" class="btn btn-primary w-100 py-2" data-bs-toggle="modal" data-bs-target="#paymentModal">
+                                <i class="bi bi-credit-card"></i> Proceed to Payment
+                            </button>
+                        {% endif %}
                     </form>
                 </div>
             </div>

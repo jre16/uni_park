@@ -20,7 +20,7 @@ urlpatterns = [
     path('parking-lot/<int:parking_lot_id>/', views.parking_lot_detail, name='parking_lot_detail'),
     path('api/nearby-parking/', views.get_nearby_parking, name='get_nearby_parking'),
     path('reserve/<int:parking_lot_id>/', views.reserve_parking, name='reserve_parking'),
-<<<<<<< HEAD
+
     
     # Subscription URLs
     path('subscriptions/', subscription_views.subscription_plans, name='subscription_plans'),
@@ -28,9 +28,8 @@ urlpatterns = [
     path('subscriptions/<int:subscription_id>/', subscription_views.subscription_details, name='subscription_details'),
     path('subscriptions/<int:subscription_id>/cancel/', subscription_views.cancel_subscription, name='cancel_subscription'),
     path('subscriptions/history/', subscription_views.subscription_history, name='subscription_history'),
-=======
     path('cancel/<int:reservation_id>/', views.cancel_reservation, name='cancel_reservation'),
     path('checkin/<int:reservation_id>/', views.check_in, name='check_in'),
 
->>>>>>> 7464572b2ec20b2a2d6425255ea0e61e92ef9e9e
+
 ]

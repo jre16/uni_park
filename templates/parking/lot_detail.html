@@ -14,6 +14,19 @@
                 </ol>
             </nav>
 
+            {% if parking_lot.temporarily_closed %}
+            <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+                <i class="bi bi-cone-striped me-2"></i>
+                <div>
+                    <strong>This parking lot is temporarily closed.</strong>
+                    {% if parking_lot.reopen_at %}
+                        Expected to reopen at {{ parking_lot.reopen_at|date:"M d, Y g:i A" }}.
+                    {% endif %}
+                    {% if parking_lot.closed_reason %}<br>{{ parking_lot.closed_reason }}{% endif %}
+                </div>
+            </div>
+            {% endif %}
+
             <div class="card mb-4">
                 <div class="card-body">
                     <div class="row align-items-center">
@@ -36,9 +49,15 @@
                                 <h3 class="text-success mb-0">${{ parking_lot.hourly_rate }}/hour</h3>
                                 <p class="text-muted small mb-0">${{ parking_lot.daily_rate }}/day • ${{ parking_lot.monthly_rate }}/month</p>
                             </div>
-                            <a href="{% url 'parking:reserve_parking' parking_lot.id %}" class="btn btn-primary btn-lg w-100">
-                                <i class="bi bi-calendar-plus"></i> Reserve Now
-                            </a>
+                            {% if parking_lot.temporarily_closed %}
+                                <button class="btn btn-outline-secondary btn-lg w-100" disabled>
+                                    <i class="bi bi-slash-circle"></i> Temporarily Closed
+                                </button>
+                            {% else %}
+                                <a href="{% url 'parking:reserve_parking' parking_lot.id %}" class="btn btn-primary btn-lg w-100">
+                                    <i class="bi bi-calendar-plus"></i> Reserve Now
+                                </a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -76,7 +95,9 @@
 
                             <h6>Status</h6>
                             <p>
-                                {% if parking_lot.is_open %}
+                                {% if parking_lot.temporarily_closed %}
+                                    <span class="badge bg-warning text-dark">Temporarily Closed</span>
+                                {% elif parking_lot.is_open %}
                                     <span class="badge bg-success">Open Now</span>
                                 {% else %}
                                     <span class="badge bg-danger">Closed</span>
@@ -108,15 +129,84 @@
                     </div>
                     <hr>
                     <div class="text-center">
-                        <a href="{% url 'parking:reserve_parking' parking_lot.id %}" class="btn btn-primary w-100 mb-2">
-                            <i class="bi bi-calendar-plus"></i> Reserve Now
-                        </a>
+                        {% if parking_lot.temporarily_closed %}
+                            <button class="btn btn-outline-secondary w-100 mb-2" disabled>
+                                <i class="bi bi-slash-circle"></i> Temporarily Closed
+                            </button>
+                        {% else %}
+                            <a href="{% url 'parking:reserve_parking' parking_lot.id %}" class="btn btn-primary w-100 mb-2">
+                                <i class="bi bi-calendar-plus"></i> Reserve Now
+                            </a>
+                        {% endif %}
                         <button class="btn btn-outline-secondary w-100" onclick="alert('Share feature coming soon!')">
                             <i class="bi bi-share"></i> Share Location
                         </button>
                     </div>
                 </div>
             </div>
+
+            {% if user.is_staff %}
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Operator Controls</h5>
+                    <span class="badge {% if parking_lot.temporarily_closed %}bg-warning text-dark{% elif parking_lot.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                        {% if parking_lot.temporarily_closed %}Temporarily Closed{% elif parking_lot.is_active %}Active{% else %}Inactive{% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="toggleLotOpen"
+                               {% if not parking_lot.temporarily_closed %}checked{% endif %}>
+                        <label class="form-check-label" for="toggleLotOpen">
+                            Lot is open for new reservations
+                        </label>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Temporary closure reason (optional)</label>
+                        <textarea class="form-control" id="closedReason" rows="2" placeholder="e.g. Maintenance, event, road closure...">{{ parking_lot.closed_reason }}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Schedule automatic reopen (optional)</label>
+                        <input type="datetime-local" id="reopenAt" class="form-control" value="{% if parking_lot.reopen_at %}{{ parking_lot.reopen_at|date:'Y-m-d\TH:i' }}{% endif %}">
+                        <div class="form-text">If set, the lot will reopen at this time in a real deployment.</div>
+                    </div>
+
+                    <button type="button" id="applyLotStatus" class="btn btn-warning w-100">
+                        <i class="bi bi-exclamation-triangle"></i> Apply Temporary Closure (UI only)
+                    </button>
+
+                    {% if active_reservations %}
+                    <p class="text-muted small mt-2 mb-0">
+                        <i class="bi bi-info-circle"></i> There are currently {{ active_reservations.count }} active or confirmed reservations in this lot.
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <script>
+            document.addEventListener('DOMContentLoaded', function(){
+                const toggle = document.getElementById('toggleLotOpen');
+                const reason = document.getElementById('closedReason');
+                const reopenAt = document.getElementById('reopenAt');
+                const applyBtn = document.getElementById('applyLotStatus');
+                const hasActive = {{ active_reservations.count|default:0 }} > 0;
+
+                applyBtn?.addEventListener('click', function(){
+                    if (!toggle.checked && hasActive) {
+                        const ok = confirm('There are active check-ins/reservations. Closing will affect existing drivers. Continue?');
+                        if (!ok) return;
+                        alert('In production, affected drivers would be notified about the closure.');
+                    }
+
+                    const reopenValue = reopenAt.value;
+                    const statusText = toggle.checked ? 'OPEN' : 'TEMPORARILY CLOSED';
+                    alert(`Lot status set to ${statusText} (UI demo only).\nReason: ${reason.value || 'N/A'}\nReopen at: ${reopenValue || 'not scheduled'}`);
+                });
+            });
+            </script>
+            {% endif %}
         </div>
     </div>
 </div>

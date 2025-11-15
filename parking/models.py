@@ -156,6 +156,10 @@ class ParkingLot(models.Model):
     closing_time = models.TimeField()
     features = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    # Operator controls
+    temporarily_closed = models.BooleanField(default=False)
+    closed_reason = models.CharField(max_length=255, blank=True, null=True)
+    reopen_at = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -163,6 +167,14 @@ class ParkingLot(models.Model):
     @property
     def is_open(self):
         from datetime import datetime
+
+        # Respect operator temporary closure first
+        if self.temporarily_closed:
+            if self.reopen_at and timezone.now() >= self.reopen_at:
+                # Auto-clear closure when reopen time passes (in-memory; persisted when saved elsewhere)
+                return True
+            return False
+
         current_time = datetime.now().time()
         return self.opening_time <= current_time <= self.closing_time
 

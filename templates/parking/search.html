@@ -77,6 +77,9 @@
                                         <span class="price-badge">${{ lot.hourly_rate }}/hr</span>
                                         <span class="text-muted small">
                                             {{ lot.available_spots }} spots available
+                                            {% if lot.temporarily_closed %}
+                                                <span class="badge bg-warning text-dark ms-2">Temporarily Closed</span>
+                                            {% endif %}
                                         </span>
                                     </div>
                                 </div>
@@ -100,9 +103,15 @@
                                     <a href="{% url 'parking:parking_lot_detail' lot.id %}" class="btn btn-primary btn-sm flex-fill">
                                         <i class="bi bi-info-circle"></i> Details
                                     </a>
-                                    <a href="{% url 'parking:reserve_parking' lot.id %}" class="btn btn-outline-success btn-sm flex-fill">
-                                    <i class="bi bi-calendar-plus"></i> Reserve
-                                    </a>
+                                    {% if lot.temporarily_closed %}
+                                        <button class="btn btn-outline-secondary btn-sm flex-fill" disabled>
+                                            <i class="bi bi-slash-circle"></i> Closed
+                                        </button>
+                                    {% else %}
+                                        <a href="{% url 'parking:reserve_parking' lot.id %}" class="btn btn-outline-success btn-sm flex-fill">
+                                            <i class="bi bi-calendar-plus"></i> Reserve
+                                        </a>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>

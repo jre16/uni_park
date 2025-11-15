@@ -191,6 +191,7 @@ def delete_vehicle(request, vehicle_id):
 
 def search_parking(request):
     form = ParkingLotSearchForm(request.GET or None)
+    # Only show active lots (operator can temporarily close lots via temporarily_closed)
     parking_lots = ParkingLot.objects.filter(is_active=True)
     if form.is_valid():
         query = form.cleaned_data.get('query')
@@ -209,12 +210,24 @@ def search_parking(request):
 
 def parking_lot_detail(request, parking_lot_id):
     parking_lot = get_object_or_404(ParkingLot, id=parking_lot_id)
-    return render(request, 'parking/lot_detail.html', {'parking_lot': parking_lot})
+    active_reservations = Reservation.objects.filter(
+        parking_lot=parking_lot,
+        status__in=['active', 'confirmed']
+    )
+    return render(request, 'parking/lot_detail.html', {
+        'parking_lot': parking_lot,
+        'active_reservations': active_reservations,
+    })
 
 
 @login_required
 def reserve_parking(request, parking_lot_id):
     parking_lot = get_object_or_404(ParkingLot, id=parking_lot_id)
+
+    # Block new reservations when lot is temporarily closed
+    if parking_lot.temporarily_closed:
+        messages.error(request, 'This parking lot is temporarily closed for new reservations.')
+        return redirect('parking:parking_lot_detail', parking_lot_id=parking_lot_id)
     student_profile = request.user.studentprofile
     vehicles = student_profile.vehicles.all()
 
