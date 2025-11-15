@@ -54,11 +54,177 @@
                             <strong>Available Spots:</strong> {{ parking_lot.available_spots }} of {{ parking_lot.total_spots }}
                         </div>
 
-                        <button type="submit" class="btn btn-primary w-100 py-2">
-                            <i class="bi bi-calendar-check"></i> Confirm Reservation
-                        </button>
+                                                <button type="button" id="proceedToPayment" class="btn btn-primary w-100 py-2" data-bs-toggle="modal" data-bs-target="#paymentModal">
+                                                        <i class="bi bi-credit-card"></i> Proceed to Payment
+                                                </button>
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal (UI-only) -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paymentModalLabel">Secure Card Payment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info d-flex align-items-center" role="alert">
+                    <i class="bi bi-shield-lock me-2"></i>
+                    Your card details are tokenized and processed via a PCI-compliant flow. This is a demo UI only.
+                </div>
+
+                <!-- Tabs for Saved vs New Card -->
+                <ul class="nav nav-tabs" id="paymentTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="saved-tab" data-bs-toggle="tab" data-bs-target="#saved" type="button" role="tab" aria-controls="saved" aria-selected="true">
+                            <i class="bi bi-wallet2"></i> Saved Methods
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="newcard-tab" data-bs-toggle="tab" data-bs-target="#newcard" type="button" role="tab" aria-controls="newcard" aria-selected="false">
+                            <i class="bi bi-credit-card-2-front"></i> New Card
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content border border-top-0 p-3" id="paymentTabContent">
+                    <!-- Saved Methods -->
+                    <div class="tab-pane fade show active" id="saved" role="tabpanel" aria-labelledby="saved-tab">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="savedCard" id="savedCard1" value="pm_tok_saved_4242" checked>
+                            <label class="form-check-label" for="savedCard1">
+                                Visa ending in 4242 · Expires 12/28 · Default
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="savedCard" id="savedCard2" value="pm_tok_saved_1881">
+                            <label class="form-check-label" for="savedCard2">
+                                Mastercard ending in 1881 · Expires 04/27
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- New Card -->
+                    <div class="tab-pane fade" id="newcard" role="tabpanel" aria-labelledby="newcard-tab">
+                        <form id="cardForm" novalidate>
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label">Name on Card</label>
+                                    <input type="text" class="form-control" id="cardholderName" placeholder="Full name" required>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label">Card Number</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-credit-card"></i></span>
+                                        <input type="text" class="form-control" id="cardNumber" inputmode="numeric" autocomplete="cc-number" placeholder="1234 1234 1234 1234" maxlength="19" required>
+                                    </div>
+                                    <div class="form-text">Use 4242 4242 4242 4242 to simulate success, 4000 0000 0000 0002 to simulate a decline.</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Expiry</label>
+                                    <input type="text" class="form-control" id="cardExpiry" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY" maxlength="5" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">CVC</label>
+                                    <input type="text" class="form-control" id="cardCvc" inputmode="numeric" autocomplete="cc-csc" placeholder="CVC" maxlength="4" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">ZIP/Postal</label>
+                                    <input type="text" class="form-control" id="cardZip" placeholder="e.g. 10001" required>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="saveCard">
+                                        <label class="form-check-label" for="saveCard">Save this card for future payments</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <div class="text-muted small"><i class="bi bi-shield-check"></i> PSD2 + 3‑D Secure ready</div>
+                <div>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" id="btnPayNow" class="btn btn-primary">
+                        <i class="bi bi-lock"></i> Pay Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+<!-- 3‑D Secure Challenge (Simulated) -->
+<div class="modal fade" id="threeDSModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">3‑D Secure Challenge</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">For your security, please complete the verification challenge from your bank.</p>
+                <div class="d-grid gap-2">
+                    <button type="button" id="btn3DSSuccess" class="btn btn-success"><i class="bi bi-check-lg"></i> Approve</button>
+                    <button type="button" id="btn3DSFail" class="btn btn-outline-danger"><i class="bi bi-x-lg"></i> Fail Challenge</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Result / Receipt (UI-only) -->
+<div class="modal fade" id="receiptModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Payment Successful</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="receipt" class="border rounded p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong>UniPark Receipt</strong>
+                        <span class="badge bg-success">PAID</span>
+                    </div>
+                    <div class="small text-muted">Ref: <span id="receiptRef"></span></div>
+                    <hr>
+                    <ul class="list-unstyled small mb-0">
+                        <li><strong>Parking Lot:</strong> {{ parking_lot.name }}</li>
+                        <li><strong>Vehicle:</strong> <span id="receiptVehicle">Selected vehicle</span></li>
+                        <li><strong>Dates:</strong> <span id="receiptDates"></span></li>
+                        <li><strong>Method:</strong> <span id="receiptMethod">Card</span></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" id="btnPrintReceipt"><i class="bi bi-printer"></i> Print</button>
+                <button type="button" class="btn btn-primary" id="btnCompleteBooking"><i class="bi bi-check-circle"></i> Complete Booking</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Error (Decline/Failure) -->
+<div class="modal fade" id="paymentErrorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">Payment Failed</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0" id="paymentErrorMessage">Your bank declined the transaction. Please try another card.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" data-bs-target="#paymentModal" data-bs-toggle="modal">Try Again</button>
             </div>
         </div>
     </div>
@@ -68,6 +234,7 @@
 document.addEventListener("DOMContentLoaded", function () {
     const startInput = document.getElementById("start_time");
     const endInput = document.getElementById("end_time");
+        const form = document.querySelector("form.needs-validation");
 
     // Ensure fields are editable
     startInput.removeAttribute("readonly");
@@ -85,13 +252,137 @@ document.addEventListener("DOMContentLoaded", function () {
     endInput.value = today + "T" + closeHour;
 
     // Auto-adjust end time when start time changes
-    startInput.addEventListener("change", function () {
+        startInput.addEventListener("change", function () {
         if (startInput.value) {
             const start = new Date(startInput.value);
             const end = new Date(start.getTime() + 60 * 60 * 1000); // +1 hour
             endInput.value = end.toISOString().slice(0,16);
         }
     });
+
+        // --- Payment UI logic (UI-only) ---
+        const paymentModalEl = document.getElementById('paymentModal');
+        const threeDSModalEl = document.getElementById('threeDSModal');
+        const receiptModalEl = document.getElementById('receiptModal');
+        const paymentErrorModalEl = document.getElementById('paymentErrorModal');
+        const btnPayNow = document.getElementById('btnPayNow');
+        const btn3DSSuccess = document.getElementById('btn3DSSuccess');
+        const btn3DSFail = document.getElementById('btn3DSFail');
+        const btnCompleteBooking = document.getElementById('btnCompleteBooking');
+        const btnPrintReceipt = document.getElementById('btnPrintReceipt');
+
+        // Format card inputs
+        const cardNumber = document.getElementById('cardNumber');
+        const cardExpiry = document.getElementById('cardExpiry');
+        const cardCvc = document.getElementById('cardCvc');
+
+        function onlyDigits(v){ return v.replace(/\D/g, ''); }
+        function formatCardNumber(v){
+            return onlyDigits(v).slice(0,16).replace(/(\d{4})(?=\d)/g, '$1 ');
+        }
+        function formatExpiry(v){
+            const d = onlyDigits(v).slice(0,4);
+            if (d.length <= 2) return d;
+            return d.slice(0,2) + '/' + d.slice(2);
+        }
+
+        if (cardNumber){ cardNumber.addEventListener('input', e => e.target.value = formatCardNumber(e.target.value)); }
+        if (cardExpiry){ cardExpiry.addEventListener('input', e => e.target.value = formatExpiry(e.target.value)); }
+        if (cardCvc){ cardCvc.addEventListener('input', e => e.target.value = onlyDigits(e.target.value).slice(0,4)); }
+
+        // Simulate tokenization + 3DS
+        btnPayNow?.addEventListener('click', () => {
+            // Decide whether using saved or new card
+            const savedTabActive = document.getElementById('saved').classList.contains('active');
+            let shouldDecline = false;
+            let needs3DS = true;
+            let methodSummary = 'Saved card ••••4242';
+
+            if (!savedTabActive) {
+                const number = (cardNumber?.value || '').replace(/\s+/g,'');
+                // Simulate common test cards
+                if (number === '4000000000000002') {
+                    shouldDecline = true; // generic decline
+                }
+                if (number === '4000000000003063') {
+                    needs3DS = true; // require 3DS
+                }
+                if (number === '4242424242424242') {
+                    needs3DS = true; // success path with 3DS
+                }
+                methodSummary = `Card ••••${number.slice(-4) || '0000'}`;
+            }
+
+            const bsPaymentModal = bootstrap.Modal.getInstance(paymentModalEl);
+            if (shouldDecline) {
+                bsPaymentModal.hide();
+                document.getElementById('paymentErrorMessage').textContent = 'Your card was declined by the issuer. Please try a different payment method (code: generic_decline).';
+                new bootstrap.Modal(paymentErrorModalEl).show();
+                return;
+            }
+
+            if (needs3DS) {
+                bsPaymentModal.hide();
+                new bootstrap.Modal(threeDSModalEl).show();
+                // After success/fail we continue in respective handlers
+                // Store chosen method for receipt
+                receiptModalEl.dataset.methodSummary = methodSummary;
+            } else {
+                // No 3DS, direct success
+                bsPaymentModal.hide();
+                showReceipt(methodSummary);
+            }
+        });
+
+        btn3DSSuccess?.addEventListener('click', () => {
+            const bs3ds = bootstrap.Modal.getInstance(threeDSModalEl);
+            bs3ds.hide();
+            const methodSummary = receiptModalEl.dataset.methodSummary || 'Card';
+            showReceipt(methodSummary);
+        });
+
+        btn3DSFail?.addEventListener('click', () => {
+            const bs3ds = bootstrap.Modal.getInstance(threeDSModalEl);
+            bs3ds.hide();
+            document.getElementById('paymentErrorMessage').textContent = '3‑D Secure challenge failed. Please try again or use another payment method.';
+            new bootstrap.Modal(paymentErrorModalEl).show();
+        });
+
+        function showReceipt(methodSummary){
+            // Fill receipt
+            const start = startInput.value ? new Date(startInput.value) : null;
+            const end = endInput.value ? new Date(endInput.value) : null;
+            const vehicleSel = document.getElementById('vehicle');
+            const vehicleText = vehicleSel?.options[vehicleSel.selectedIndex]?.text || 'Selected vehicle';
+            const range = (start && end) ? `${start.toLocaleString()} → ${end.toLocaleString()}` : 'N/A';
+            document.getElementById('receiptVehicle').textContent = vehicleText;
+            document.getElementById('receiptDates').textContent = range;
+            document.getElementById('receiptMethod').textContent = methodSummary;
+            document.getElementById('receiptRef').textContent = 'rcpt_' + Math.random().toString(36).slice(2,10);
+            new bootstrap.Modal(receiptModalEl).show();
+        }
+
+        btnPrintReceipt?.addEventListener('click', () => {
+            window.print();
+        });
+
+        // On complete, submit original form to create reservation (backend unchanged)
+        btnCompleteBooking?.addEventListener('click', () => {
+            const bsReceipt = bootstrap.Modal.getInstance(receiptModalEl);
+            bsReceipt.hide();
+            // Inject dummy fields so backend can evolve later
+            const tok = document.createElement('input');
+            tok.type = 'hidden';
+            tok.name = 'payment_token';
+            tok.value = 'tok_demo_' + Math.random().toString(36).slice(2,10);
+            form.appendChild(tok);
+            const pm = document.createElement('input');
+            pm.type = 'hidden';
+            pm.name = 'payment_method';
+            pm.value = 'card';
+            form.appendChild(pm);
+            form.submit();
+        });
 });
 </script>
 {% endblock %}
