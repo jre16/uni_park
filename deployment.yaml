@@ -15,6 +15,5 @@ spec:
       containers:
         - name: django-container
           image: mydjangoapp:latest
-          imagePullPolicy: Never
           ports:
             - containerPort: 8000
