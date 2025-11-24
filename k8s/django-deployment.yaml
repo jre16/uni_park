@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unipark
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: unipark
+  template:
+    metadata:
+      labels:
+        app: unipark
+    spec:
+      containers:
+        - name: unipark
+          image: unipark:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DB_NAME
+              value: unipark_db
+            - name: DB_USER
+              value: postgres
+            - name: DB_PASSWORD
+              value: postgres
+            - name: DB_HOST
+              value: postgres
+            - name: DB_PORT
+              value: "5432"

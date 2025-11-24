@@ -1,8 +1,9 @@
 pipeline {
     agent any
 
-    triggers {
-        pollSCM('H/2 * * * *')
+    environment {
+        IMAGE_NAME = "unipark:latest"
+        K8S_DIR = "k8s"
     }
 
     stages {
@@ -12,63 +13,39 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image in Minikube') {
+        stage('Build Docker Image for Minikube') {
             steps {
-                bat '''
-                    @echo off
-                    echo === Switching to Minikube Docker environment ===
-                    for /f "tokens=*" %%i in ('minikube docker-env --shell cmd') do %%i
-                    
-                    echo === Building UNIPARK Docker image ===
-                    docker build -t unipark:latest .
-                    
-                    echo === Verifying image ===
-                    docker images | findstr unipark
-                '''
+                sh """
+                eval \$(minikube docker-env)
+                docker build -t $IMAGE_NAME .
+                """
             }
         }
 
-        stage('Deploy to Minikube') {
+        stage('Deploy to Kubernetes') {
             steps {
-                bat '''
-                    @echo off
-                    echo === Ensuring Minikube is running ===
-                    minikube status || minikube start --driver=docker
-                    
-                    echo === Updating kubectl context ===
-                    minikube update-context
-                    
-                    echo === Applying Kubernetes manifests ===
-                    kubectl apply -f k8s/deployment.yaml
-                    
-                    echo === Waiting for deployments ===
-                    kubectl rollout status deployment/postgres-deployment --timeout=180s
-                    kubectl rollout status deployment/django-deployment --timeout=180s
-                    
-                    echo === Getting service URL ===
-                    minikube service django-service --url
-                '''
+                sh """
+                kubectl apply -f $K8S_DIR
+                """
             }
         }
 
-        stage('Run Migrations') {
+        stage('Run Django Migrations') {
             steps {
-                bat '''
-                    @echo off
-                    echo === Running Django migrations ===
-                    for /f "tokens=*" %%i in ('kubectl get pods -l app=django-app -o jsonpath="{.items[0].metadata.name}"') do set POD_NAME=%%i
-                    kubectl exec %POD_NAME% -- python manage.py migrate --noinput
-                '''
+                sh """
+                POD=\$(kubectl get pods -l app=unipark -o jsonpath="{.items[0].metadata.name}")
+                kubectl exec \$POD -- python manage.py migrate --noinput
+                """
             }
         }
     }
 
     post {
         success {
-            echo 'Deployment successful! Access the app using: minikube service django-service'
+            echo '✅ UniPark deployed successfully!'
         }
         failure {
-            echo 'Deployment failed. Check logs with: kubectl logs -l app=django-app'
+            echo '❌ Deployment failed — check Jenkins logs.'
         }
     }
 }
