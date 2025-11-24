@@ -1,86 +1,179 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from django.core.validators import RegexValidator
-from django.utils import timezone
-from .models import StudentProfile, Vehicle, ParkingLot, Reservation, SubscriptionPlan, StudentSubscription
+from django.utils.translation import gettext_lazy as _
+
+from .models import StudentProfile, Vehicle, ParkingLot, Reservation
 import re
 
-class StudentSignupForm(UserCreationForm):
-    email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={
-        'class': 'form-control',
-        'placeholder': 'Enter your email'
-    }))
-    phone = forms.CharField(required=False, widget=forms.TextInput(attrs={
-        'class': 'form-control',
-        'placeholder': 'Enter your phone number'
-    }))
-    first_name = forms.CharField(required=True, widget=forms.TextInput(attrs={
-        'class': 'form-control',
-        'placeholder': 'First Name'
-    }))
-    last_name = forms.CharField(required=True, widget=forms.TextInput(attrs={
-        'class': 'form-control',
-        'placeholder': 'Last Name'
-    }))
+
+class _AuthFieldMixin:
+    """
+    Mixin that enriches auth form widgets for floating labels, accessibility, and RTL-readiness.
+    """
+
+    AUTOCOMPLETE_HINTS = {
+        "username": "username",
+        "email": "email",
+        "phone": "tel",
+        "password": "current-password",
+        "password1": "new-password",
+        "password2": "new-password",
+        "first_name": "given-name",
+        "last_name": "family-name",
+    }
+
+    INPUTMODE_HINTS = {
+        "username": "email",
+        "email": "email",
+        "phone": "tel",
+    }
+
+    def _auto_id_for(self, name: str) -> str | None:
+        auto_id = getattr(self, "auto_id", None)
+        if not auto_id:
+            return None
+        if "%s" in str(auto_id):
+            return str(auto_id) % self.add_prefix(name)
+        return str(auto_id)
+
+    def _init_accessible_widgets(self) -> None:
+        for name, field in self.fields.items():
+            widget = field.widget
+            attrs = widget.attrs.copy()
+
+            attrs.pop("placeholder", None)
+            attrs.setdefault("dir", "auto")
+            attrs.setdefault("aria-invalid", "false")
+
+            autocomplete = self.AUTOCOMPLETE_HINTS.get(name)
+            if autocomplete:
+                attrs["autocomplete"] = autocomplete
+
+            inputmode = self.INPUTMODE_HINTS.get(name)
+            if inputmode:
+                attrs["inputmode"] = inputmode
+
+            if name in {"username", "email"}:
+                attrs.setdefault("autocapitalize", "none")
+                attrs.setdefault("spellcheck", "false")
+
+            if name == "phone":
+                attrs.setdefault("pattern", r"[\d\s\+\-\(\)]{6,}")
+
+            attrs.setdefault("data-validate", name)
+            attrs.setdefault("aria-required", "true" if field.required else "false")
+
+            if field.help_text:
+                described = self._auto_id_for(name)
+                if described:
+                    attrs.setdefault("aria-describedby", f"{described}_help")
+
+            widget.attrs = attrs
+
+
+class StudentSignupForm(_AuthFieldMixin, UserCreationForm):
+    email = forms.EmailField(
+        required=True,
+        label=_("Email address"),
+        widget=forms.EmailInput(),
+        help_text=_("We’ll send receipts and verification updates here."),
+    )
+    phone = forms.CharField(
+        required=False,
+        label=_("Phone number"),
+        widget=forms.TextInput(),
+        help_text=_("Optional. Helps with SMS updates and recovery."),
+    )
+    first_name = forms.CharField(
+        required=True,
+        label=_("First name"),
+        widget=forms.TextInput(),
+    )
+    last_name = forms.CharField(
+        required=True,
+        label=_("Last name"),
+        widget=forms.TextInput(),
+    )
 
     class Meta:
         model = User
-        fields = ('username', 'first_name', 'last_name', 'email', 'password1', 'password2')
+        fields = (
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "phone",
+            "password1",
+            "password2",
+        )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['username'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Username'
-        })
-        self.fields['password1'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Password'
-        })
-        self.fields['password2'].widget.attrs.update({
-            'class': 'form-control',
-            'placeholder': 'Confirm Password'
-        })
+
+        self.fields["username"].label = _("Username")
+        self.fields["username"].help_text = _(
+            "Lowercase letters, numbers, and @/./+/-/_"
+        )
+        self.fields["password1"].help_text = _(
+            "Use at least 8 characters with a mix of upper/lowercase, numbers, and symbols."
+        )
+        self.fields["password2"].help_text = _("Repeat your password for confirmation.")
+
+        self._init_accessible_widgets()
+
+        self.fields["password1"].widget.attrs.setdefault("data-validate", "password")
+        self.fields["password2"].widget.attrs.setdefault(
+            "data-validate", "password-confirm"
+        )
 
     def clean_email(self):
-        email = self.cleaned_data.get('email')
-        if User.objects.filter(email=email).exists():
-            raise forms.ValidationError("This email is already registered.")
+        email = self.cleaned_data.get("email")
+        if email and User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError(_("This email is already registered."))
         return email
 
     def clean_phone(self):
-        phone = self.cleaned_data.get('phone')
+        phone = self.cleaned_data.get("phone", "")
         if phone:
-            # Remove all non-digit characters
-            phone_digits = re.sub(r'\D', '', phone)
-            if len(phone_digits) < 10 or len(phone_digits) > 15:
-                raise forms.ValidationError("Please enter a valid phone number.")
+            phone_digits = re.sub(r"\D", "", phone)
+            if not 10 <= len(phone_digits) <= 15:
+                raise forms.ValidationError(_("Please enter a valid phone number."))
+            return phone_digits
         return phone
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.email = self.cleaned_data['email']
-        user.first_name = self.cleaned_data['first_name']
-        user.last_name = self.cleaned_data['last_name']
+        user.email = self.cleaned_data["email"]
+        user.first_name = self.cleaned_data["first_name"]
+        user.last_name = self.cleaned_data["last_name"]
+
         if commit:
             user.save()
-            # Create student profile
             StudentProfile.objects.create(
                 user=user,
-                phone_number=self.cleaned_data.get('phone')
+                phone_number=self.cleaned_data.get("phone"),
             )
         return user
 
-class StudentLoginForm(forms.Form):
-    email_or_phone = forms.CharField(widget=forms.TextInput(attrs={
-        'class': 'form-control',
-        'placeholder': 'Email or Phone Number'
-    }))
-    password = forms.CharField(widget=forms.PasswordInput(attrs={
-        'class': 'form-control',
-        'placeholder': 'Password'
-    }))
+
+class StudentLoginForm(_AuthFieldMixin, forms.Form):
+    username = forms.CharField(
+        label=_("Email or phone"),
+        widget=forms.TextInput(),
+        help_text=_("Use the email or phone number linked to your account."),
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(),
+        label=_("Password"),
+        help_text=_("Your password is case-sensitive."),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._init_accessible_widgets()
+        self.fields["password"].widget.attrs.setdefault("data-validate", "password")
+
 
 class VehicleForm(forms.ModelForm):
     class Meta:
@@ -103,9 +196,9 @@ class VehicleForm(forms.ModelForm):
             }),
             'license_plate': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'e.g., ABC 123',
-                'pattern': '.*',
-                'title': 'Lebanese format: ABC 123'
+                'placeholder': 'e.g., B 123456',
+                'pattern': '[A-Za-z]\s\d{2,8}',
+                'title': 'Lebanese format: one letter followed by 2-8 digits'
             }),
             'color': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -120,21 +213,15 @@ class VehicleForm(forms.ModelForm):
         license_plate = self.cleaned_data.get('license_plate')
         if license_plate:
             # Format Lebanese license plate (keep space, convert to uppercase)
-            formatted_plate = re.sub(r'\s+', ' ', license_plate.upper().strip())
-            
-            # Validate Lebanese format
-            lebanese_patterns = [
-                r'^\d{2,3}\s[A-Z]{2,3}$',  # 123 ABC, 12 AB
-                r'^[A-Z]{2,3}\s\d{2,3}$',  # ABC 123, AB 12
-            ]
-            
-            if not any(re.match(pattern, formatted_plate) for pattern in lebanese_patterns):
+            formatted_plate = re.sub(r'\s+', '', license_plate.upper().strip())
+
+            match = re.fullmatch(r'([A-Z])(\d{2,8})', formatted_plate or '')
+            if not match:
                 raise forms.ValidationError(
-                    "Invalid Lebanese license plate format. "
-                    "Use format like: 123 ABC or ABC 123"
+                    "Invalid Lebanese license plate format. Use format like: B 123456"
                 )
-            
-            return formatted_plate
+
+            return f"{match.group(1)} {match.group(2)}"
         return license_plate
 
     def clean_year(self):
@@ -171,7 +258,7 @@ class ParkingLotSearchForm(forms.Form):
 class ReservationForm(forms.ModelForm):
     class Meta:
         model = Reservation
-        fields = ['vehicle', 'start_time', 'end_time', 'payment_type', 'subscription']
+        fields = ['vehicle', 'start_time', 'end_time']
         widgets = {
             'start_time': forms.DateTimeInput(
                 attrs={'type': 'datetime-local', 'class': 'form-control', 'step': 300},
@@ -181,98 +268,10 @@ class ReservationForm(forms.ModelForm):
                 attrs={'type': 'datetime-local', 'class': 'form-control', 'step': 300},
                 format='%Y-%m-%dT%H:%M' 
             ),
-            'payment_type': forms.Select(attrs={
-                'class': 'form-select',
-                'onchange': 'toggleSubscriptionField(this.value)'
-            }),
-            'subscription': forms.Select(attrs={
-                'class': 'form-select'
-            })
-        }
-
-    def __init__(self, *args, student=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Ensure the format is accepted properly
-        for field in ['start_time', 'end_time']:
-            self.fields[field].input_formats = ['%Y-%m-%dT%I:%M']
-        
-        # Only show active subscriptions for the current student
-        if student:
-            self.fields['subscription'].queryset = StudentSubscription.objects.filter(
-                student=student,
-                status__in=['active', 'grace_period'],
-                end_date__gt=timezone.now()
-            )
-        else:
-            self.fields['subscription'].queryset = StudentSubscription.objects.none()
-        
-        # Make subscription optional but required if payment_type is subscription
-        self.fields['subscription'].required = False
-
-    def clean(self):
-        cleaned_data = super().clean()
-        payment_type = cleaned_data.get('payment_type')
-        subscription = cleaned_data.get('subscription')
-
-        if payment_type == 'subscription':
-            if not subscription:
-                raise forms.ValidationError("Please select a valid subscription")
-            if not subscription.is_valid():
-                raise forms.ValidationError("Selected subscription is not active or has expired")
-        return cleaned_data
-
-
-class SubscriptionPlanForm(forms.ModelForm):
-    class Meta:
-        model = SubscriptionPlan
-        fields = ['name', 'description', 'price', 'features', 'is_active']
-        widgets = {
-            'name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'e.g., Student Basic Monthly'
-            }),
-            'description': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Plan benefits and terms...'
-            }),
-            'price': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Monthly price',
-                'step': '0.01'
-            }),
-            'features': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'List of features, one per line'
-            }),
-            'is_active': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
-            })
-        }
-
-
-class SubscriptionForm(forms.ModelForm):
-    class Meta:
-        model = StudentSubscription
-        fields = ['plan', 'auto_renew']
-        widgets = {
-            'plan': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'auto_renew': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
-            })
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Only show active plans in the dropdown
-        self.fields['plan'].queryset = SubscriptionPlan.objects.filter(is_active=True)
-
-    def clean(self):
-        cleaned_data = super().clean()
-        plan = cleaned_data.get('plan')
-        if plan and not plan.is_active:
-            raise forms.ValidationError("Selected plan is no longer available")
-        return cleaned_data
+        # Ensure the format is accepted properly
+        for field in ['start_time', 'end_time']:
+            self.fields[field].input_formats = ['%Y-%m-%dT%H:%M']

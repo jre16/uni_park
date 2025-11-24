@@ -7,7 +7,7 @@
         <h1>Find Parking Made Simple</h1>
         <p class="lead">Discover, reserve, and pay for parking spots near AUB with ease</p>
         <div class="mt-4">
-            <a href="{% url 'parking:search_parking' %}" class="btn btn-success btn-lg me-3">
+            <a href="{% url 'parking:find_parking' %}" class="btn btn-success btn-lg me-3">
                 <i class="bi bi-search"></i> Find Parking Now
             </a>
             {% if not user.is_authenticated %}

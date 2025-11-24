@@ -1,0 +1,16 @@
+{% load i18n %}
+{% with idx=index|default:1 %}
+{% if idx == 2 %}
+    {% with grad_from='from-fuchsia-500/25' grad_to='to-surface-900/92' bar='bg-fuchsia-400/70' glow1='bg-fuchsia-500/35' glow2='bg-purple-400/25' %}
+        {% include "partials/_reservation_card_single_core.html" %}
+    {% endwith %}
+{% elif idx == 3 %}
+    {% with grad_from='from-indigo-500/25' grad_to='to-surface-900/92' bar='bg-indigo-400/70' glow1='bg-indigo-500/35' glow2='bg-blue-400/25' %}
+        {% include "partials/_reservation_card_single_core.html" %}
+    {% endwith %}
+{% else %}
+    {% with grad_from='from-primary/25' grad_to='to-surface-900/92' bar='bg-primary/60' glow1='bg-primary/35' glow2='bg-accent/25' %}
+        {% include "partials/_reservation_card_single_core.html" %}
+    {% endwith %}
+{% endif %}
+{% endwith %}

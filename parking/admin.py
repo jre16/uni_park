@@ -17,13 +17,13 @@ class VehicleAdmin(admin.ModelAdmin):
 
 @admin.register(ParkingLot)
 class ParkingLotAdmin(admin.ModelAdmin):
-    list_display = ['name', 'address', 'hourly_rate', 'daily_rate', 'available_spots', 'total_spots', 'is_active']
-    list_filter = ['is_active', 'hourly_rate']
-    search_fields = ['name', 'address']
+    list_display = ['name', 'owner', 'address', 'hourly_rate', 'daily_rate', 'available_spots', 'total_spots', 'is_active']
+    list_filter = ['is_active', 'hourly_rate', 'owner']
+    search_fields = ['name', 'address', 'owner__username', 'owner__email']
     
     fieldsets = (
         ('Basic Information', {
-            'fields': ('name', 'address', 'is_active')
+            'fields': ('name', 'owner', 'address', 'is_active')
         }),
         ('Location', {
             'fields': ('latitude', 'longitude')

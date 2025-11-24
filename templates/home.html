@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load i18n unipark_tags %}
+
+{% block title %}{% trans "UniPark — Premium campus parking" %}{% endblock %}
+
+{% block content %}
+{% include "partials/_hero.html" %}
+
+<section class="mx-auto mt-16 max-w-6xl px-4 lg:px-6 space-y-6">
+    <div id="home-reservation"
+         hx-get="{% url 'parking:home_reservation_card' %}"
+         hx-trigger="load delay:200ms, reservation:refresh"
+         hx-target="this"
+         hx-swap="innerHTML">
+        {% include "partials/_home_reservation_card.html" with reservations=upcoming_reservations %}
+    </div>
+</section>
+
+<section class="mx-auto mt-24 max-w-6xl px-4 lg:px-6">
+    <div class="feature-card-grid" data-aos="fade-up">
+        {% for feature in features %}
+            <article class="card-feature" data-card-feature>
+                <div class="card-feature__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <use href="#icon-{{ feature.icon }}"></use>
+                    </svg>
+                </div>
+                <div class="card-feature__body">
+                    <h3>{{ feature.title }}</h3>
+                    <p>{{ feature.description }}</p>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="mx-auto mt-24 max-w-6xl px-4 lg:px-6">
+    <article class="card-feature card-feature--insights" data-aos="fade-up">
+        <div class="card-feature--insights__header">
+            <span class="card-badge card-badge--ghost">{% trans "Operations" %}</span>
+        </div>
+        <div class="card-feature__body card-feature--insights__body">
+            <h2>{% trans "Realtime insights, delightful motion" %}</h2>
+            <p>
+                {% trans "Every card glides in with care. Count-ups celebrate your growth while sparklines whisper trends." %}
+            </p>
+        </div>
+        <div class="card-feature--insights__stats">
+            <div>
+                <span class="meta-label">{% trans "Average wait" %}</span>
+                <span class="meta-value">04:12</span>
+            </div>
+            <div>
+                <span class="meta-label">{% trans "CO₂ saved" %}</span>
+                <span class="meta-value">2.4t</span>
+            </div>
+        </div>
+    </article>
+</section>
+
+<section class="mx-auto mt-24 max-w-6xl px-4 lg:px-6" x-data="testimonialCarousel">
+    <div class="testimonial-shell" data-aos="fade-up">
+        <div class="testimonial-shell__header">
+            <div class="testimonial-shell__intro">
+                <h3>{% trans "Loved across campus" %}</h3>
+                <p>{% trans "Testimonials orbit along a CSS-only carousel—Alpine.js simply keeps the cadence silky smooth." %}</p>
+            </div>
+            <div class="testimonial-shell__controls" role="tablist" aria-label="{% trans 'Testimonials' %}">
+                {% for _ in testimonials %}
+                    <button type="button"
+                            class="testimonial-shell__control"
+                            @click="goTo({{ forloop.counter0 }})"
+                            :aria-selected="index === {{ forloop.counter0 }} ? 'true' : 'false'">
+                    </button>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="testimonial-shell__body">
+            <div class="testimonial-shell__grid">
+                {% for testimonial in testimonials %}
+                    <article data-testimonial
+                             class="card-feature testimonial-card opacity-100 transition-opacity duration-500 ease-out">
+                        <p class="testimonial-card__quote">“{{ testimonial.quote }}”</p>
+                        <div class="testimonial-card__author">
+                            <img src="{{ testimonial.avatar }}" alt="{{ testimonial.name }}">
+                            <div>
+                                <p class="testimonial-card__name">{{ testimonial.name }}</p>
+                                <p class="testimonial-card__role">{{ testimonial.role }}</p>
+                            </div>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<svg class="hidden">
+    <symbol id="icon-map-pin" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M12 3a6 6 0 0 0-6 6c0 4.5 6 10.5 6 10.5S18 13.5 18 9a6 6 0 0 0-6-6zm0 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/>
+    </symbol>
+    <symbol id="icon-qr-code" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 4h5v5H4zM15 4h5v5h-5zM4 15h5v5H4zM15 15h2m3 0h-2v2m-3-2v5m5-5v5"/>
+    </symbol>
+    <symbol id="icon-wallet" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M20 7H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16v-4h-5a2 2 0 1 1 0-4h5V7z"/>
+    </symbol>
+</svg>
+{% endblock %}
+

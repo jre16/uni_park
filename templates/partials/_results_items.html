@@ -1,0 +1,18 @@
+{% if show_skeletons %}
+  {% for _ in "123"|make_list %}
+    <li role="presentation">
+      {% include "partials/_skeleton_card.html" %}
+    </li>
+  {% endfor %}
+{% endif %}
+
+{% for lot in lots %}
+  <li role="listitem">
+    {% include "partials/_lot_card.html" with lot=lot %}
+  </li>
+{% empty %}
+  <li role="listitem">
+    {% include "partials/_empty_state.html" %}
+  </li>
+{% endfor %}
+

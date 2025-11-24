@@ -1,0 +1,19 @@
+{% load i18n %}
+{% with cards=reservations|default:None %}
+    {% if cards %}
+        {% for reservation in cards %}
+            {% include "partials/_reservation_card_single.html" with reservation=reservation index=forloop.counter %}
+            {% if not forloop.last %}
+            <div class="my-4 h-px bg-white/10"></div>
+            {% endif %}
+        {% endfor %}
+    {% elif reservation %}
+        {% include "partials/_reservation_card_single.html" with reservation=reservation index=1 %}
+    {% else %}
+        <div class="rounded-[2.5rem] border border-dashed border-white/15 bg-surface-900/70 p-8 text-center text-white/60 shadow-inner shadow-primary/10">
+            <p class="text-sm font-semibold uppercase tracking-[0.22em]">{% trans "No upcoming reservations" %}</p>
+            <p class="mt-2 text-sm">{% trans "Reserve a spot to see it appear here instantly." %}</p>
+        </div>
+    {% endif %}
+{% endwith %}
+

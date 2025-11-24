@@ -1,0 +1,60 @@
+[
+  {
+    "model": "parking.parkinglot",
+    "pk": 1,
+    "fields": {
+      "name": "AUB Medical Center Garage",
+      "address": "Clemenceau Street, Beirut",
+      "latitude": 33.892351,
+      "longitude": 35.485245,
+      "hourly_rate": "3.50",
+      "daily_rate": "18.00",
+      "monthly_rate": "220.00",
+      "total_spots": 120,
+      "available_spots": 34,
+      "opening_time": "06:00:00",
+      "closing_time": "23:59:59",
+      "features": "EV chargers, License plate recognition, 24/7 security",
+      "is_active": true
+    }
+  },
+  {
+    "model": "parking.parkinglot",
+    "pk": 2,
+    "fields": {
+      "name": "Downtown Skyline Parking",
+      "address": "Martyrs' Square, Beirut",
+      "latitude": 33.896595,
+      "longitude": 35.504284,
+      "hourly_rate": "4.00",
+      "daily_rate": "22.00",
+      "monthly_rate": "260.00",
+      "total_spots": 200,
+      "available_spots": 58,
+      "opening_time": "00:00:00",
+      "closing_time": "23:59:59",
+      "features": "Valet-ready, Indoor, CCTV",
+      "is_active": true
+    }
+  },
+  {
+    "model": "parking.parkinglot",
+    "pk": 3,
+    "fields": {
+      "name": "Gemmayze Creative Hub",
+      "address": "Gouraud Street, Gemmayze, Beirut",
+      "latitude": 33.896854,
+      "longitude": 35.509872,
+      "hourly_rate": "2.80",
+      "daily_rate": "15.00",
+      "monthly_rate": "190.00",
+      "total_spots": 90,
+      "available_spots": 12,
+      "opening_time": "07:00:00",
+      "closing_time": "02:00:00",
+      "features": "Co-working perks, QR entry",
+      "is_active": true
+    }
+  }
+]
+

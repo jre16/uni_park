@@ -15,7 +15,7 @@
                     <a href="{% url 'parking:add_vehicle' %}" class="btn btn-primary">
                         <i class="bi bi-plus-circle"></i> Add Vehicle
                     </a>
-                    <a href="{% url 'parking:search_parking' %}" class="btn btn-outline-primary ms-2">
+                    <a href="{% url 'parking:find_parking' %}" class="btn btn-outline-primary ms-2">
                         <i class="bi bi-search"></i> Find Parking
                     </a>
                 </div>
@@ -23,29 +23,6 @@
         </div>
     </div>
     
-    <!-- Subscription Banner -->
-    {% if not student.studentsubscription_set.filter.exists %}
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card bg-gradient-primary border-0">
-                <div class="card-body text-center py-4" style="background: linear-gradient(135deg, var(--purple-bg), var(--purple-light));">
-                    <div class="row align-items-center">
-                        <div class="col-md-8 text-md-start text-white">
-                            <h3 class="mb-2">🌟 Unlock Premium Parking Benefits</h3>
-                            <p class="mb-0">Subscribe to a monthly plan and enjoy reserved spots, discounted rates, and exclusive perks!</p>
-                        </div>
-                        <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                            <a href="{% url 'parking:subscription_plans' %}" class="btn btn-light btn-lg">
-                                <i class="bi bi-star-fill text-warning"></i> View Plans
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
     <!-- Quick Stats -->
     <div class="row mb-4">
         <div class="col-md-3 mb-3">
@@ -69,18 +46,9 @@
         <div class="col-md-3 mb-3">
             <div class="card">
                 <div class="card-body text-center">
-                    <i class="bi bi-star-fill text-warning" style="font-size: 2rem;"></i>
-                    {% with active_sub=student.studentsubscription_set.filter.first %}
-                    {% if active_sub %}
-                        <h3 class="mt-2 mb-0">{{ active_sub.plan.name }}</h3>
-                        <p class="text-muted small mb-0">Active Plan until {{ active_sub.end_date|date:"M j, Y" }}</p>
-                    {% else %}
-                        <h3 class="mt-2 mb-0">No Active Plan</h3>
-                        <p class="text-muted small mb-0">
-                            <a href="{% url 'parking:subscription_plans' %}" class="text-primary"><i class="bi bi-plus-circle"></i> Subscribe Now</a>
-                        </p>
-                    {% endif %}
-                    {% endwith %}
+                    <i class="bi bi-currency-dollar text-warning" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2 mb-0">$0.00</h3>
+                    <p class="text-muted small mb-0">This Month</p>
                 </div>
             </div>
         </div>
@@ -167,7 +135,7 @@
                 <div class="card-body">
                     {% if recent_reservations %}
                         <div class="list-group list-group-flush">
-                            {% for reservation in recent_reservations %}
+                           {% for reservation in recent_reservations %}
                             <div class="list-group-item px-0">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
@@ -175,14 +143,9 @@
                                         <p class="text-muted small mb-1">
                                             {{ reservation.vehicle.make }} {{ reservation.vehicle.model }}
                                         </p>
-                                        <p class="text-muted small mb-2">
+                                        <p class="text-muted small mb-0">
                                             {{ reservation.start_time|date:"M d, Y H:i" }}
                                         </p>
-                                        <button type="button" class="btn btn-sm btn-outline-danger refund-btn" 
-                                                data-reservation-id="{{ reservation.id }}" data-bs-toggle="modal" 
-                                                data-bs-target="#refundModal">
-                                            <i class="bi bi-arrow-counterclockwise"></i> Request Refund
-                                        </button>
 
                                         {% if reservation.status == 'confirmed' %}
                                             <a href="{% url 'parking:cancel_reservation' reservation.id %}" 
@@ -191,16 +154,56 @@
                                             <i class="bi bi-x-circle"></i> Cancel
                                             </a>
                                             {% if reservation.qr_code %}
-                                                <div class="mt-3 text-center">
-                                                    <img src="{{ reservation.qr_code.url }}" alt="QR Code" width="100" height="100" class="img-thumbnail">
-                                                    <p class="small text-muted mt-1">Show this QR code at the parking gate</p>
+                                                <div class="mt-3 d-flex flex-column flex-sm-row align-items-sm-center gap-2">
+                                                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#qrModal{{ reservation.id }}">
+                                                        <i class="bi bi-qr-code"></i> View QR Code
+                                                    </button>
+                                                    <a href="{{ reservation.qr_code.url }}" download="reservation_{{ reservation.id }}.png" class="btn btn-sm btn-outline-secondary">
+                                                        <i class="bi bi-download"></i> Download PNG
+                                                    </a>
+                                                </div>
+
+                                                <div class="modal fade" id="qrModal{{ reservation.id }}" tabindex="-1" aria-labelledby="qrModalLabel{{ reservation.id }}" aria-hidden="true">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header border-0">
+                                                                <h5 class="modal-title" id="qrModalLabel{{ reservation.id }}">Parking Access QR</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body text-center">
+                                                                <div class="d-inline-flex p-3 bg-light rounded-3 shadow-sm">
+                                                                    <img src="{{ reservation.qr_code.url }}" alt="QR Code for {{ reservation.parking_lot.name }}" class="img-fluid" style="max-width: 240px;">
+                                                                </div>
+                                                                <p class="text-muted small mt-3 mb-0">Have this QR ready when you arrive at {{ reservation.parking_lot.name }}.</p>
+                                                                <div class="mt-3 text-start bg-light rounded-3 p-3 small">
+                                                                    <div class="d-flex align-items-center mb-2">
+                                                                        <i class="bi bi-geo-alt text-primary me-2"></i>
+                                                                        <span><strong>Lot:</strong> {{ reservation.parking_lot.name }}</span>
+                                                                    </div>
+                                                                    <div class="d-flex align-items-center mb-2">
+                                                                        <i class="bi bi-car-front text-success me-2"></i>
+                                                                        <span><strong>Vehicle:</strong> {{ reservation.vehicle.make }} {{ reservation.vehicle.model }} ({{ reservation.vehicle.license_plate }})</span>
+                                                                    </div>
+                                                                    <div class="d-flex align-items-center">
+                                                                        <i class="bi bi-clock-history text-warning me-2"></i>
+                                                                        <span><strong>Time:</strong> {{ reservation.start_time|date:"M d, Y H:i" }} - {{ reservation.end_time|date:"M d, Y H:i" }}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="modal-footer border-0">
+                                                                <a href="{{ reservation.qr_code.url }}" download="reservation_{{ reservation.id }}.png" class="btn btn-primary">
+                                                                    <i class="bi bi-download"></i> Download PNG
+                                                                </a>
+                                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             {% endif %}
 
                                         {% else %}
                                             <span class="badge bg-secondary mt-2">Not Active</span>
                                         {% endif %}
->>>>>>> main
                                     </div>
 
                                     <span class="badge bg-{{ reservation.status|yesno:'success,warning,info,secondary,danger' }}">
@@ -216,7 +219,7 @@
                             <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
                             <h6 class="text-muted mt-3">No reservations yet</h6>
                             <p class="text-muted small">Start by finding a parking spot</p>
-                            <a href="{% url 'parking:search_parking' %}" class="btn btn-outline-primary btn-sm">
+                                <a href="{% url 'parking:find_parking' %}" class="btn btn-outline-primary btn-sm">
                                 Find Parking
                             </a>
                         </div>
@@ -252,7 +255,7 @@
                         <div class="col-md-6">
                             <h6>Quick Actions</h6>
                             <div class="d-flex flex-column gap-2">
-                                <a href="{% url 'parking:search_parking' %}" class="btn btn-outline-primary">
+                                <a href="{% url 'parking:find_parking' %}" class="btn btn-outline-primary">
                                     <i class="bi bi-search"></i> Find Parking
                                 </a>
                                 <a href="{% url 'parking:add_vehicle' %}" class="btn btn-outline-success">

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Find parking — UniPark{% endblock %}
+
+{% block content %}
+<section class="find-wrap">
+  <div class="find-layout">
+    <aside class="filter-pane" aria-label="Filters">
+      <h1 class="find-title">Where are we parking today?</h1>
+      {% include "partials/_filters_bar.html" with query=query active_filter=active_filter live_enabled=live_enabled current_sort=current_sort %}
+    </aside>
+
+    <main
+      class="results-pane"
+      aria-live="polite"
+      aria-busy="{% if show_skeletons %}true{% else %}false{% endif %}"
+    >
+      <div id="results-toolbar" class="results-toolbar" aria-controls="results-grid">
+        <div class="results-toolbar__top">
+          <div class="results-count">
+            {% if lots %}
+              {{ lots|length }} results
+            {% else %}
+              No results
+            {% endif %}
+          </div>
+          <button id="toggle-map" class="btn-ghost" type="button" aria-pressed="false" aria-controls="map-drawer">
+            Map
+          </button>
+        </div>
+        {% include "partials/_results_filters.html" with active_filter=active_filter %}
+      </div>
+
+      <ul
+        id="results-grid"
+        class="results-grid"
+        role="list"
+        aria-label="Parking results"
+        data-next-url="{{ next_url|default:'' }}"
+      >
+        {% include "partials/_results_items.html" with lots=lots show_skeletons=show_skeletons %}
+      </ul>
+
+      <div id="load-more-anchor" aria-hidden="true"></div>
+    </main>
+  </div>
+
+  <div
+    id="map-drawer"
+    class="map-drawer"
+    hidden
+    aria-hidden="true"
+    role="region"
+    aria-label="Parking map"
+  >
+    <div id="map" class="map" role="application" aria-label="Interactive map"></div>
+  </div>
+</section>
+
+<script defer src="{% static 'js/find.js' %}"></script>
+<link rel="stylesheet" href="{% static 'css/find.css' %}">
+{% endblock %}
+

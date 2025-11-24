@@ -1,0 +1,58 @@
+{% load i18n %}
+<div class="hero-card relative group" data-hero-card data-location="{{ location.slug }}">
+    <div class="hero-card__glow"></div>
+    <div class="hero-card__frame">
+        <div class="hero-card__chip">
+            <span class="hero-card__chip-title">{{ location.name }}</span>
+            <span class="hero-card__chip-status hero-card__chip-status--{{ location.status_kind }}">
+                <svg class="hero-card__chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M5 13l4 4L19 7"/>
+                </svg>
+                {{ location.status_label }}
+            </span>
+        </div>
+
+        <div class="hero-card__map kenburns">
+            <div class="hero-card__pin hero-card__pin--primary" data-pin>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"
+                          d="M12 3a6 6 0 0 0-6 6c0 4.5 6 10.5 6 10.5S18 13.5 18 9a6 6 0 0 0-6-6zm0 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/>
+                </svg>
+            </div>
+            <div class="hero-card__pin hero-card__pin--qr" data-pin>
+                <span>QR</span>
+            </div>
+            <div class="hero-card__pin hero-card__pin--eta" data-pin>
+                {{ location.eta }}
+            </div>
+        </div>
+
+        <div class="hero-card__content">
+            <div class="hero-card__availability">
+                {% for dot in location.availability %}
+                    <span class="hero-card__availability-dot hero-card__availability-dot--{{ dot.state }}"
+                          aria-label="{{ dot.label }}"></span>
+                {% endfor %}
+                <span class="hero-card__availability-label">
+                    {{ location.availability_label }}
+                </span>
+            </div>
+
+            <div class="hero-card__details">
+                <p class="hero-card__lot">{{ location.featured_lot }}</p>
+                <p class="hero-card__hint">{{ location.hint }}</p>
+                <dl class="hero-card__times">
+                    <div>
+                        <dt>{% trans "Arrival" %}</dt>
+                        <dd>{{ location.arrival }}</dd>
+                    </div>
+                    <div>
+                        <dt>{% trans "Exit" %}</dt>
+                        <dd>{{ location.exit }}</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+

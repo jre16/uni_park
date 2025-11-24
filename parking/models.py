@@ -1,89 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.utils import timezone
-from datetime import timedelta
 from io import BytesIO
 from django.core.files import File
 from django.urls import reverse
 import re
 import qrcode
-
-
-class SubscriptionPlan(models.Model):
-    name = models.CharField(max_length=100)
-    description = models.TextField()
-    price = models.DecimalField(max_digits=8, decimal_places=2)
-    features = models.TextField()
-    perks = models.JSONField(default=list)  # Store perks as a list of dictionaries
-    color_theme = models.CharField(max_length=50, default='primary')  # For UI styling
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.name} (${self.price}/month)"
-
-
-class StudentSubscription(models.Model):
-    STATUS_CHOICES = [
-        ('active', 'Active'),
-        ('grace_period', 'Grace Period'),
-        ('paused', 'Paused'),
-        ('cancelled', 'Cancelled'),
-        ('expired', 'Expired'),
-    ]
-
-    student = models.ForeignKey('StudentProfile', on_delete=models.CASCADE)
-    plan = models.ForeignKey(SubscriptionPlan, on_delete=models.PROTECT)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
-    start_date = models.DateTimeField()
-    end_date = models.DateTimeField()
-    auto_renew = models.BooleanField(default=True)
-    grace_period_end = models.DateTimeField(null=True, blank=True)
-    cancelled_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def clean(self):
-        if self.end_date <= self.start_date:
-            raise ValidationError("End date must be after start date")
-        if self.grace_period_end and self.grace_period_end <= self.end_date:
-            raise ValidationError("Grace period must extend beyond subscription end date")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-
-    def is_valid(self):
-        now = timezone.now()
-        if self.status == 'active':
-            return now <= self.end_date
-        elif self.status == 'grace_period':
-            return now <= self.grace_period_end if self.grace_period_end else False
-        return False
-
-    def enter_grace_period(self, days=7):
-        if self.status == 'active' and self.end_date <= timezone.now():
-            self.status = 'grace_period'
-            self.grace_period_end = self.end_date + timedelta(days=days)
-            self.save()
-
-    def cancel(self):
-        if self.status in ['active', 'grace_period']:
-            self.status = 'cancelled'
-            self.cancelled_at = timezone.now()
-            self.auto_renew = False
-            self.save()
-
-    def reactivate(self):
-        if self.status in ['paused', 'cancelled'] and timezone.now() <= self.end_date:
-            self.status = 'active'
-            self.cancelled_at = None
-            self.save()
-
-    def __str__(self):
-        return f"{self.student.user.username}'s {self.plan.name} Subscription ({self.status})"
 
 
 class StudentProfile(models.Model):
@@ -111,24 +33,13 @@ class Vehicle(models.Model):
     def clean(self):
         # Normalize input: remove extra spaces and uppercase
         raw_plate = self.license_plate.upper().strip()
-        plate = re.sub(r'\s+', '', raw_plate)
+        compact_plate = re.sub(r'\s+', '', raw_plate)
 
-        print(f"DEBUG LICENSE PLATE INPUT: '{raw_plate}' -> '{plate}'")
+        match = re.fullmatch(r'([A-Z])(\d{2,8})', compact_plate or '')
+        if not match:
+            raise ValidationError("Invalid Lebanese license plate format. Use format like: B 123456")
 
-        # Accept both 'ABC123' / 'ABC 123' and '123ABC' / '123 ABC'
-        patterns = [
-            r'^[A-Z]{2,3}\s?\d{2,3}$',  # ABC123 or ABC 123
-            r'^\d{2,3}\s?[A-Z]{2,3}$',  # 123ABC or 123 ABC
-        ]
-
-        if not any(re.match(pattern, raw_plate) or re.match(pattern, plate) for pattern in patterns):
-            raise ValidationError("Invalid Lebanese license plate format. Use format like: 123 ABC or ABC 123")
-
-        # Reformat for storage (always 'XXX 123' or '123 XXX')
-        if re.match(r'^([A-Z]{2,3})(\d{2,3})$', plate):
-            self.license_plate = re.sub(r'^([A-Z]{2,3})(\d{2,3})$', r'\1 \2', plate)
-        elif re.match(r'^(\d{2,3})([A-Z]{2,3})$', plate):
-            self.license_plate = re.sub(r'^(\d{2,3})([A-Z]{2,3})$', r'\1 \2', plate)
+        self.license_plate = f"{match.group(1)} {match.group(2)}"
 
     def save(self, *args, **kwargs):
         # Run validation before saving
@@ -144,6 +55,7 @@ class Vehicle(models.Model):
 
 class ParkingLot(models.Model):
     name = models.CharField(max_length=100)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_parking_lots', null=True, blank=True)
     address = models.TextField()
     latitude = models.DecimalField(max_digits=10, decimal_places=8)
     longitude = models.DecimalField(max_digits=11, decimal_places=8)
@@ -173,12 +85,8 @@ class Reservation(models.Model):
         ('confirmed', 'Confirmed'),
         ('active', 'Active'),
         ('completed', 'Completed'),
+        ('expired', 'Expired'),
         ('cancelled', 'Cancelled'),
-    ]
-
-    PAYMENT_TYPE_CHOICES = [
-        ('one_time', 'One-time Payment'),
-        ('subscription', 'Subscription'),
     ]
 
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
@@ -188,38 +96,69 @@ class Reservation(models.Model):
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     total_cost = models.DecimalField(max_digits=8, decimal_places=2)
-    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE_CHOICES, default='one_time')
-    subscription = models.ForeignKey(StudentSubscription, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
-    def clean(self):
-        super().clean()
-        if self.payment_type == 'subscription':
-            if not self.subscription:
-                raise ValidationError("Subscription is required for subscription-based reservations")
-            if not self.subscription.is_valid():
-                raise ValidationError("Subscription is not active or has expired")
-
-    def save(self, *args, **kwargs):
-        if self.payment_type == 'subscription':
-            # No cost for subscription-based reservations
-            self.total_cost = 0
-        self.full_clean()
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.student.user.username} - {self.parking_lot.name}"
-
+    
     qr_code = models.ImageField(upload_to='qr_codes/', blank=True, null=True)
     checked_in = models.BooleanField(default=False)
 
     def generate_qr_code(self):
+        import qrcode
+        from io import BytesIO
+        from django.core.files import File
+        from django.conf import settings
+
         check_in_url = reverse('parking:check_in', args=[self.id])
         full_url = f"http://127.0.0.1:8000{check_in_url}"  # Change to your domain
 
-        # Generate the QR code image
-        qr = qrcode.make(full_url)
+        # Generate a high quality QR code image
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_H,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(full_url)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+
         buffer = BytesIO()
-        qr.save(buffer, format='PNG')
+        img.save(buffer, format='PNG')
         self.qr_code.save(f"reservation_{self.id}.png", File(buffer), save=False)
         buffer.close()
+
+    @classmethod
+    def auto_refresh_statuses(cls) -> None:
+        """
+        Synchronize reservation statuses with their scheduled windows.
+
+        - Pending/confirmed reservations that are currently in their booking window become active.
+        - Active reservations that have ended remain active only if the driver checked in; otherwise they expire.
+        - Checked-in reservations that have ended transition to completed once their window has elapsed.
+        """
+        from django.utils import timezone
+
+        now = timezone.now()
+
+        # Promote upcoming reservations to active when their window begins.
+        cls.objects.filter(
+            status__in=['pending', 'confirmed'],
+            start_time__lte=now,
+            end_time__gt=now,
+        ).update(status='active')
+
+        # Mark checked-in reservations as completed when their window ends.
+        cls.objects.filter(
+            status__in=['pending', 'confirmed', 'active'],
+            end_time__lte=now,
+            checked_in=True,
+        ).update(status='completed')
+
+        # Any other overdue reservations expire automatically.
+        cls.objects.filter(
+            status__in=['pending', 'confirmed', 'active'],
+            end_time__lte=now,
+            checked_in=False,
+        ).update(status='expired')

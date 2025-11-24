@@ -1,0 +1,23 @@
+{% load i18n %}
+<div class="flex flex-wrap items-center gap-2" x-data="{ active: '{{ active_filter|default:'all' }}' }">
+    {% for pill in pills %}
+        <button type="button"
+                class="filter-pill"
+                :class="{ 'filter-pill--active': active === '{{ pill.id }}' }"
+                hx-get="{{ pill.url }}"
+                hx-target="#search-results"
+                hx-vals='{"filter": "{{ pill.id }}"}'
+                hx-include="[name='query']"
+                @click="active = '{{ pill.id }}'">
+            <span class="inline-flex items-center gap-2">
+                {% if pill.icon %}
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <use href="#icon-{{ pill.icon }}" />
+                </svg>
+                {% endif %}
+                <span>{{ pill.label }}</span>
+            </span>
+        </button>
+    {% endfor %}
+</div>
+

@@ -1,0 +1,17 @@
+{% load i18n %}
+<div class="feature-card-grid">
+    {% for card in metrics.feature_cards %}
+        <article class="card-feature" data-card-feature>
+            <div class="card-feature__icon" aria-hidden="true">
+                {{ card.icon|safe }}
+            </div>
+            <div class="card-feature__body">
+                <h3>{{ card.title }}</h3>
+                <p>{{ card.description }}</p>
+            </div>
+        </article>
+    {% empty %}
+        <p class="text-sm text-surface-400 dark:text-surface-500">{% trans "No feature highlights to show yet." %}</p>
+    {% endfor %}
+</div>
+

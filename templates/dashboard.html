@@ -1,0 +1,193 @@
+    {% extends "base.html" %}
+{% load i18n unipark_tags %}
+
+{% block title %}{% trans "Operations dashboard — UniPark" %}{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-6xl px-4 lg:px-6">
+    <div class="dashboard-hero">
+        <div class="dashboard-hero__inner">
+            <div class="space-y-10">
+                <div class="dashboard-hero__heading">
+                    <h1>{% trans "Welcome back" %}, {{ user.first_name|default:user.username }}</h1>
+                    {% if is_parking_lot_owner %}
+                        <p>
+                            {% trans "Monitor occupancy, premium bookings, and revenue at a glance. Each card lifts with a gentle glow for fast, effortless scanning." %}
+                        </p>
+                    {% else %}
+                        <p>
+                            {% trans "Manage your parking reservations, view your vehicles, and find available spots." %}
+                        </p>
+                    {% endif %}
+                </div>
+                
+                {% if is_parking_lot_owner %}
+                    {% include 'partials/_stat_cards.html' %}
+                    {% include 'partials/_feature_cards.html' %}
+                {% else %}
+                    {# User-specific content - show their reservations and vehicles #}
+                    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+                            <h3 class="text-lg font-semibold text-white mb-4">{% trans "My Vehicles" %}</h3>
+                            <p class="text-3xl font-bold text-accent">{{ vehicles.count }}</p>
+                            <p class="text-sm text-white/70 mt-2">{% trans "Registered vehicles" %}</p>
+                        </div>
+                        <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+                            <h3 class="text-lg font-semibold text-white mb-4">{% trans "Active Reservations" %}</h3>
+                            <p class="text-3xl font-bold text-accent">{{ recent_reservations|length }}</p>
+                            <p class="text-sm text-white/70 mt-2">{% trans "Current bookings" %}</p>
+                        </div>
+                        <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+                            <h3 class="text-lg font-semibold text-white mb-4">{% trans "Total Reservations" %}</h3>
+                            <p class="text-3xl font-bold text-accent">{{ recent_reservations.count }}</p>
+                            <p class="text-sm text-white/70 mt-2">{% trans "All time" %}</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            <div>
+                {% if is_parking_lot_owner %}
+                    {% include 'partials/_reserved_card.html' %}
+                {% else %}
+                    {# Show user's next reservation instead #}
+                    {% if recent_reservations %}
+                        {% with next_reservation=recent_reservations|first %}
+                        <aside class="card-reserved active">
+                            <div class="card-reserved__header">
+                                <span class="card-badge card-badge--ghost">{% trans "Reserved" %}</span>
+                                <div class="card-reserved__status">
+                                    <span class="status-indicator"></span>
+                                    <span class="status-label">{% trans "Live" %}</span>
+                                </div>
+                            </div>
+                            <div class="card-reserved__body">
+                                <h3>{{ next_reservation.parking_lot.name }}</h3>
+                                <p class="card-reserved__subtitle">{% trans "Your reservation is active" %}</p>
+                                <div class="card-reserved__meta">
+                                    <div>
+                                        <span class="meta-label">{% trans "Vehicle" %}</span>
+                                        <span class="meta-value">{{ next_reservation.vehicle.license_plate }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="meta-label">{% trans "Status" %}</span>
+                                        <span class="meta-value">{{ next_reservation.get_status_display }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-reserved__footer">
+                                <div class="card-reserved__time">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M12 6v6l3 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                                    </svg>
+                                    <span>{{ next_reservation.start_time|date:"H:i" }} - {{ next_reservation.end_time|date:"H:i" }}</span>
+                                </div>
+                                <a href="{% url 'parking:find_parking' %}" class="card-reserved__cta" type="button">
+                                    <span>{% trans "View details" %}</span>
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M8 5l7 7-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                                    </svg>
+                                </a>
+                            </div>
+                        </aside>
+                        {% endwith %}
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <hr class="cards-section-divider">
+
+    {% if is_parking_lot_owner %}
+        {# Owner dashboard content #}
+        <div class="mt-12 grid gap-8 lg:grid-cols-[2fr_1fr]">
+            <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_25px_60px_-30px_rgba(91,0,199,0.45)] backdrop-blur-xl dark:bg-white/5">
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
+                    <h2 class="text-lg font-semibold text-white">{% trans "Live reservations" %}</h2>
+                    <a href="#" class="text-xs font-semibold uppercase tracking-wide text-accent hover:text-white transition-colors">{% trans "Export CSV" %}</a>
+                </div>
+                <div class="mt-5 max-h-[360px] overflow-auto">
+                    <table class="min-w-full divide-y divide-white/5 text-left text-sm text-white/80">
+                        <thead class="sticky top-0 z-10 bg-[#14092C]/80 text-xs uppercase tracking-wide text-white/50 backdrop-blur">
+                            <tr>
+                                <th class="px-6 py-4 font-semibold">{% trans "Lot" %}</th>
+                                <th class="px-6 py-4 font-semibold">{% trans "Driver" %}</th>
+                                <th class="px-6 py-4 font-semibold">{% trans "Check-in" %}</th>
+                                <th class="px-6 py-4 text-right font-semibold">{% trans "Status" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5">
+                            {% if live_reservations %}
+                                {% for reservation in live_reservations %}
+                                    <tr class="transition-colors duration-300 hover:bg-white/5">
+                                        <td class="px-6 py-4 font-semibold text-white">{{ reservation.parking_lot.name }}</td>
+                                        <td class="px-6 py-4">{{ reservation.student.user.get_full_name|default:reservation.student.user.username }}</td>
+                                        <td class="px-6 py-4 text-white/70">{{ reservation.start_time|date:"H:i" }}</td>
+                                        <td class="px-6 py-4 text-right">
+                                            <span class="inline-flex items-center gap-2 rounded-full bg-accent/15 px-3 py-1 text-xs font-semibold text-accent">
+                                                {{ reservation.get_status_display }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="px-6 py-4 text-center text-white/50">{% trans "No active reservations" %}</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="flex h-full flex-col gap-6">
+                <div class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_20px_45px_-28px_rgba(34,197,94,0.4)] backdrop-blur-xl">
+                    <h2 class="text-lg font-semibold text-white">{% trans "Quick actions" %}</h2>
+                    <div class="mt-5 grid gap-3 text-sm text-white/80">
+                        <button class="rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-left font-semibold transition duration-300 hover:-translate-y-1 hover:border-accent/40 hover:text-white">
+                            {% trans "Send welcome push to new drivers" %}
+                        </button>
+                        <button class="rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-left font-semibold transition duration-300 hover:-translate-y-1 hover:border-accent/40 hover:text-white">
+                            {% trans "Review flagged plate numbers" %}
+                        </button>
+                        <button class="rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-left font-semibold transition duration-300 hover:-translate-y-1 hover:border-accent/40 hover:text-white">
+                            {% trans "Download occupancy report" %}
+                        </button>
+                    </div>
+                </div>
+                <div class="rounded-3xl border border-transparent bg-gradient-to-br from-[#2A0B4F] via-[#451C7A] to-[#110222] p-6 text-white shadow-[0_25px_65px_-35px_rgba(124,42,232,0.7)]">
+                    <p class="text-sm uppercase tracking-wide text-white/70">{% trans "Need insights?" %}</p>
+                    <h2 class="mt-3 text-2xl font-semibold">{% trans "Schedule a strategy sync" %}</h2>
+                    <p class="mt-2 text-sm text-white/80">
+                        {% trans "Our team will audit your flow and design custom automations tailored to your garages." %}
+                    </p>
+                    <button class="mt-5 inline-flex items-center gap-2 rounded-full bg-white/15 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/25">
+                        {% trans "Book a call" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        {# User dashboard content - show their reservations #}
+        <div class="mt-12">
+            <h2 class="text-2xl font-semibold text-white mb-6">{% trans "Recent Reservations" %}</h2>
+            <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {% for reservation in recent_reservations %}
+                    <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+                        <h3 class="text-lg font-semibold text-white mb-2">{{ reservation.parking_lot.name }}</h3>
+                        <p class="text-sm text-white/70 mb-4">{{ reservation.vehicle.license_plate }}</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-white/60">{{ reservation.start_time|date:"M d, H:i" }}</span>
+                            <span class="inline-flex items-center rounded-full bg-accent/15 px-3 py-1 text-xs font-semibold text-accent">
+                                {{ reservation.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-white/70">{% trans "No reservations yet. Find parking to get started!" %}</p>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}
+

@@ -1,0 +1,31 @@
+{% load i18n %}
+<section class="auth-wrap" aria-label="{% blocktrans with heading=heading %}{{ heading }}{% endblocktrans %}">
+  <div class="auth-grid">
+    <div class="auth-intro">
+      <div class="hero-copy">
+        <span class="kicker">UNIPARK</span>
+        <h1 class="title">{{ heading }}</h1>
+        <p class="sub">{{ subtext }}</p>
+      </div>
+      {% if extra_note %}
+      <p class="note">{{ extra_note }}</p>
+      {% endif %}
+      {% if feature_points %}
+      <ul class="feature-list" role="list">
+        {% for point in feature_points %}
+        <li>{{ point }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+
+    <div class="auth-card" role="form" aria-labelledby="auth-heading">
+      <span aria-hidden="true" class="auth-card__accent"></span>
+      <h2 id="auth-heading" class="sr-only">{{ heading }}</h2>
+      <div class="auth-card__inner">
+        {% block form %}{% endblock %}
+      </div>
+    </div>
+  </div>
+</section>
+

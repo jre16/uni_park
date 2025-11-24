@@ -1,0 +1,35 @@
+<article class="lot-card" aria-labelledby="lot-{{ lot.id }}-title">
+  <header class="lot-head">
+    <h3 class="lot-title" id="lot-{{ lot.id }}-title">{{ lot.name }}</h3>
+    <span class="lot-open" aria-label="Spots available">
+      {{ lot.open }} / {{ lot.capacity }} open
+    </span>
+  </header>
+
+  <p class="lot-sub">
+    {{ lot.address }}
+  </p>
+
+  <ul class="lot-tags" aria-label="Features">
+    <li>🚶 {{ lot.distance_km|default:0|floatformat:1 }} km</li>
+    {% for tag in lot.tags %}
+      <li>{{ tag }}</li>
+    {% empty %}
+      <li>🛡️ 24/7 secure</li>
+      <li>⚡ Instant access</li>
+    {% endfor %}
+  </ul>
+
+  <div class="lot-foot">
+    <div class="price" aria-label="Price per hour">
+      {% if lot.price is not None %}
+        <span class="amount">{{ lot.price|floatformat:2 }} USD</span>
+      {% else %}
+        <span class="amount">—</span>
+      {% endif %}
+      <span class="per">hourly</span>
+    </div>
+    <a href="{% url 'parking:parking_lot_detail' lot.id %}" class="btn-primary">View lot →</a>
+  </div>
+</article>
+

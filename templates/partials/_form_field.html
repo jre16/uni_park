@@ -1,0 +1,20 @@
+{% load unipark_tags %}
+{% with value=field.value|default_if_none:'' %}
+<div class="field {% if field.errors %}has-error{% endif %} {% if value %}is-filled{% endif %}" data-field-wrapper>
+  {% if field.errors %}
+    {{ field|add_class:"control"|attr:"aria-invalid:true" }}
+  {% else %}
+    {{ field|add_class:"control" }}
+  {% endif %}
+  <label for="{{ field.id_for_label }}" class="float-label">{{ field.label }}</label>
+</div>
+{% if field.help_text %}
+  {% if field.name == "password" or field.name == "password1" or field.name == "password2" %}
+    <small class="help" id="{{ field.auto_id }}_help" data-help aria-live="polite">{{ field.help_text|safe }}</small>
+  {% endif %}
+{% endif %}
+{% for err in field.errors %}
+  <p class="error" role="alert">{{ err }}</p>
+{% endfor %}
+{% endwith %}
+

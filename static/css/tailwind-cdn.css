@@ -1,0 +1,288 @@
+/*!
+ * Tailwind CDN overrides for UniPark
+ * Provides CSS variables, typography smoothing and custom utility classes
+ * used across server-rendered templates without a build step.
+ */
+:root {
+  --font-scale: 1;
+  --gradient-primary: linear-gradient(120deg, #5B00C7 0%, #7C2AE8 60%, #9A5CF4 100%);
+  --surface-bg: #f8f9ff;
+  --surface-dark: #0f101c;
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --noise-data: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.18'/%3E%3C/svg%3E");
+}
+
+@font-face {
+  font-family: "Inter Variable";
+  src: url("../fonts/Inter/Inter-VariableFont_slnt,wght.woff2") format("woff2-variations");
+  font-display: swap;
+  font-weight: 100 900;
+}
+
+@font-face {
+  font-family: "Cairo Variable";
+  src: url("../fonts/Cairo/Cairo-VariableFont_slnt,wght.woff2") format("woff2-variations");
+  font-display: swap;
+  font-weight: 200 1000;
+}
+
+html {
+  font-size: calc(16px * var(--font-scale));
+}
+
+.rtl body {
+  font-family: "Cairo Variable", "Cairo", system-ui, sans-serif;
+}
+
+body {
+  background-color: var(--surface-bg);
+  color: #0f1126;
+  font-family: "Inter Variable", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.dark body {
+  background: var(--surface-dark);
+  color: #f8f9ff;
+}
+
+.nav-link {
+  position: relative;
+  padding: 0.65rem 1.1rem;
+  border-radius: 9999px;
+  color: rgba(255, 255, 255, 0.7);
+  transition: color 0.3s ease, background-color 0.3s ease, transform 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.nav-link.is-active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  box-shadow: 0 12px 30px -15px rgba(124, 42, 232, 0.75);
+}
+
+.mobile-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.2rem;
+  border-radius: 1rem;
+  color: rgba(15, 16, 28, 0.78);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+}
+
+.dark .mobile-link {
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(30, 33, 62, 0.85);
+}
+
+.glass-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: 1px solid var(--glass-border);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04));
+  backdrop-filter: blur(18px);
+  color: #f8f9ff;
+  box-shadow: 0 12px 32px -18px rgba(91, 0, 199, 0.55);
+  transition: all 0.3s ease;
+}
+
+.glass-button:hover {
+  border-color: rgba(255, 255, 255, 0.28);
+  transform: translateY(-1px);
+}
+
+.profile-link {
+  display: block;
+  border-radius: 14px;
+  padding: 0.7rem 0.8rem;
+  color: rgba(15, 16, 28, 0.75);
+  transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease;
+}
+
+.profile-link:hover {
+  background: rgba(91, 0, 199, 0.08);
+  color: rgba(15, 16, 28, 0.95);
+  transform: translateX(2px);
+}
+
+.dark .profile-link {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.dark .profile-link:hover {
+  background: rgba(91, 0, 199, 0.25);
+  color: #fff;
+}
+
+.footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: rgba(255, 255, 255, 0.65);
+  transition: color 0.25s ease, transform 0.25s ease;
+}
+
+.footer-link:hover {
+  color: rgba(255, 255, 255, 0.95);
+  transform: translateX(3px);
+}
+
+.text-gradient {
+  background-image: var(--gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.noise-texture {
+  background-image: var(--noise-data);
+}
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.5rem 1.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.25s ease;
+}
+
+.filter-pill:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.filter-pill--active {
+  background: linear-gradient(120deg, rgba(91, 0, 199, 0.95), rgba(124, 42, 232, 0.95));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 12px 30px -18px rgba(124, 42, 232, 0.8);
+}
+
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 16px;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  background: #22C55E;
+  color: #0f101c;
+  border-radius: 999px;
+  transition: top 0.3s ease;
+}
+
+.skip-link:focus {
+  top: 16px;
+}
+
+.result-card {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 1.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 40px -24px rgba(91, 0, 199, 0.65);
+  transition: transform 0.35s ease, border 0.35s ease, box-shadow 0.35s ease;
+  background-image: linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0));
+}
+
+.result-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(34, 197, 94, 0.45);
+  box-shadow: 0 30px 60px -24px rgba(34, 197, 94, 0.55);
+}
+
+.rtl .nav-link,
+.rtl .mobile-link,
+.rtl .profile-link,
+.rtl .footer-link {
+  letter-spacing: 0.015em;
+}
+
+.floating-field {
+  position: relative;
+}
+
+.floating-field input,
+.floating-field select,
+.floating-field textarea {
+  width: 100%;
+  border-radius: 1.75rem;
+  border: 1px solid rgba(124, 42, 232, 0.12);
+  background: rgba(255, 255, 255, 0.85);
+  padding: 1.25rem 1.25rem 0.75rem;
+  font-size: 0.95rem;
+  color: #0f1126;
+  transition: border 0.25s ease, box-shadow 0.25s ease;
+}
+
+.dark .floating-field input,
+.dark .floating-field select,
+.dark .floating-field textarea {
+  background: rgba(22, 22, 44, 0.85);
+  color: #f8f9ff;
+}
+
+.floating-field label {
+  position: absolute;
+  left: 1.25rem;
+  top: 1.1rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(15, 17, 38, 0.45);
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+.dark .floating-field label {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.floating-field input:focus,
+.floating-field select:focus,
+.floating-field textarea:focus {
+  outline: none;
+  border-color: rgba(91, 0, 199, 0.45);
+  box-shadow: 0 0 0 4px rgba(91, 0, 199, 0.12);
+}
+
+.floating-field input:not(:placeholder-shown) + label,
+.floating-field input:focus + label,
+.floating-field select:focus + label,
+.floating-field textarea:focus + label {
+  transform: translateY(-0.8rem) scale(0.82);
+  color: #5B00C7;
+}
+
+.dark .floating-field input:not(:placeholder-shown) + label,
+.dark .floating-field input:focus + label,
+.dark .floating-field select:focus + label,
+.dark .floating-field textarea:focus + label {
+  color: #22C55E;
+}
+
+.high-contrast body {
+  background: #000 !important;
+  color: #fff !important;
+}
+
+.high-contrast .result-card,
+.high-contrast .glass-button,
+.high-contrast .lot-map,
+.high-contrast .rounded-\[2\.5rem\] {
+  border-color: #fff !important;
+  box-shadow: none !important;
+}

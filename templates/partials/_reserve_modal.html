@@ -1,0 +1,105 @@
+{% load i18n unipark_tags %}
+<div x-data="{ open: true }"
+     x-show="open"
+     x-transition.opacity
+     class="fixed inset-0 z-[70] flex items-center justify-center bg-surface-900/75 p-6 backdrop-blur">
+    <div class="relative w-full max-w-xl overflow-hidden rounded-[2.5rem] border border-purple-300/20 bg-gradient-to-br from-purple-950/95 to-indigo-950/95 p-8 text-white shadow-xl">
+        <button type="button"
+                class="absolute right-6 top-6 z-10 flex items-center justify-center rounded-full bg-white/10 border border-white/20 p-3 text-white transition hover:bg-white/20 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/40 cursor-pointer"
+                @click="open = false"
+                hx-get=""
+                hx-target="#modal-root"
+                hx-swap="innerHTML">
+            <span class="sr-only">{% trans "Close modal" %}</span>
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M6 18 18 6"/>
+            </svg>
+        </button>
+
+        <header class="relative z-10">
+            <span class="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
+                {% trans "Reserve" %}
+            </span>
+            <h2 class="mt-4 text-2xl font-semibold text-white">
+                {% trans "Reserve your spot" %}
+            </h2>
+            <p class="mt-2 max-w-lg text-sm text-white/70 leading-relaxed">
+                {% blocktrans %}Instant confirmation for {{ lot.title }} — your QR pass appears the moment you submit.{% endblocktrans %}
+            </p>
+            {% if active_reservations_count is not None %}
+            <p class="mt-3 inline-flex items-center gap-2 rounded-lg bg-white/5 border border-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.22em] text-white/70">
+                <span class="h-1.5 w-1.5 rounded-full bg-accent"></span>
+                {% blocktrans with count=active_reservations_count limit=max_reservations %}{{ count }} of {{ limit }} reservations booked{% endblocktrans %}
+            </p>
+            {% endif %}
+        </header>
+
+        <form method="post"
+              class="relative z-10 mt-8 space-y-6"
+              hx-post="{% url 'parking:reserve_partial' lot.id %}"
+              hx-target="#modal-root"
+              hx-swap="innerHTML">
+            {% csrf_token %}
+            {% if max_reservations_reached %}
+            <div class="rounded-2xl border border-amber-400/30 bg-amber-500/15 px-4 py-3 text-sm text-amber-100">
+                {% blocktrans with limit=max_reservations %}You already have {{ limit }} active reservations. Cancel one to book another.{% endblocktrans %}
+            </div>
+            {% endif %}
+            <div class="space-y-2">
+                <label for="vehicle" class="text-xs font-semibold uppercase tracking-[0.22em] text-white/70">
+                    {% trans "Vehicle" %}
+                </label>
+                <select id="vehicle" name="vehicle"
+                        class="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 transition">
+                    {% if vehicle_warning %}
+                        <option value="" selected disabled class="bg-surface-900 text-white">{% trans "Add a vehicle from settings to reserve." %}</option>
+                    {% endif %}
+                    {% for vehicle in vehicles %}
+                        <option value="{{ vehicle.id }}" class="bg-surface-900 text-white">{{ vehicle.plate_number }} — {{ vehicle.make }} {{ vehicle.model }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="grid gap-6 sm:grid-cols-2">
+                <div class="space-y-2">
+                    <label for="start_time" class="text-xs font-semibold uppercase tracking-[0.22em] text-white/70">
+                        {% trans "Start time" %}
+                    </label>
+                    <input id="start_time" type="datetime-local" name="start_time"
+                           value="{{ default_start }}"
+                           class="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 transition">
+                </div>
+                <div class="space-y-2">
+                    <label for="end_time" class="text-xs font-semibold uppercase tracking-[0.22em] text-white/70">
+                        {% trans "End time" %}
+                    </label>
+                    <input id="end_time" type="datetime-local" name="end_time"
+                           value="{{ default_end }}"
+                           class="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 transition">
+                </div>
+            </div>
+
+            {% if error %}
+                <p class="rounded-2xl border border-red-400/30 bg-red-500/15 px-4 py-3 text-sm font-medium text-red-100">{{ error }}</p>
+            {% endif %}
+
+            <div class="flex flex-col gap-4 rounded-3xl border border-white/12 bg-white/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div class="text-xs">
+                    <p class="font-semibold uppercase tracking-[0.22em] text-white/60">{% trans "Rate" %}</p>
+                    <p class="mt-1 text-base font-semibold text-white">{{ lot.rate|currency:"USD" }}</p>
+                    <p class="mt-1 text-[0.75rem] text-white/60">{% trans "Total recalculates once hours are confirmed." %}</p>
+                </div>
+                <button type="submit"
+                        {% if vehicle_warning or max_reservations_reached %}
+                        class="inline-flex cursor-not-allowed items-center gap-2 rounded-full bg-white/20 px-7 py-3 text-sm font-semibold text-white/70 opacity-70"
+                        disabled
+                        {% else %}
+                        class="magnetic-button inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-accent to-accent/70 px-8 py-3 text-sm font-semibold text-surface-900 shadow-lg transition hover:from-accent/90 hover:to-accent/60"
+                        {% endif %}>
+                    {% trans "Confirm reservation" %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Create your account — UniPark{% endblock %}
+
+{% block content %}
+<section class="signup-hero">
+  <div class="signup-hero__inner">
+    <div class="signup-hero__copy">
+      <div class="signup-hero__visual" aria-hidden="true">
+        <div class="signup-hero__visual-title">
+          <span class="visual-word visual-word--left">UN</span>
+          <span class="visual-spot" aria-label="I">
+            <span class="visual-spot__letter">I</span>
+            <span class="visual-spot__parking">
+              <span class="parking-track"></span>
+              <span class="parking-car">
+                <span class="car-shadow"></span>
+                <span class="car-shell">
+                  <span class="car-roof"></span>
+                  <span class="car-window car-window--front"></span>
+                  <span class="car-window car-window--rear"></span>
+                  <span class="car-door-line"></span>
+                  <span class="car-bumper car-bumper--front"></span>
+                  <span class="car-bumper car-bumper--rear"></span>
+                  <span class="car-light car-light--front"></span>
+                  <span class="car-light car-light--rear"></span>
+                </span>
+                <span class="car-wheel car-wheel--front">
+                  <span class="car-wheel__rim"></span>
+                </span>
+                <span class="car-wheel car-wheel--rear">
+                  <span class="car-wheel__rim"></span>
+                </span>
+              </span>
+            </span>
+          </span>
+          <span class="visual-word visual-word--right">PARK</span>
+        </div>
+        <div class="signup-hero__visual-tagline">Smart parking made simple</div>
+      </div>
+      <span class="signup-hero__badge">UNIPARK</span>
+      <h1 class="signup-hero__title">Create your account</h1>
+      <p class="signup-hero__lede">Access bookings, receipts, and faster check-ins.</p>
+      <p class="signup-hero__note">You’re moments away from a smoother arrival experience.</p>
+      <ul class="signup-hero__benefits" role="list">
+        <li>Keep your reservations in sync across devices.</li>
+        <li>Download receipts instantly after each stay.</li>
+        <li>Switch languages with one tap — fully RTL ready.</li>
+      </ul>
+    </div>
+
+    <div class="signup-card" role="form" aria-labelledby="signup-heading">
+      <span class="signup-card__halo" aria-hidden="true"></span>
+      <div class="signup-card__overlay" aria-hidden="true"></div>
+      <div class="signup-card__shell">
+        <div class="signup-card__decor" aria-hidden="true"></div>
+        <h2 id="signup-heading" class="sr-only">Create your UniPark account</h2>
+        {% if form.non_field_errors %}
+        <div class="non-field-errors" role="alert">
+          {% for err in form.non_field_errors %}<p>{{ err }}</p>{% endfor %}
+        </div>
+        {% endif %}
+        <form method="post" novalidate class="signup-form" id="signup-form">
+          {% csrf_token %}
+          <div class="signup-form__grid">
+            {% include "partials/_form_field.html" with field=form.username %}
+            {% include "partials/_form_field.html" with field=form.email %}
+          </div>
+          <div class="signup-form__grid signup-form__grid--two">
+            {% include "partials/_form_field.html" with field=form.first_name %}
+            {% include "partials/_form_field.html" with field=form.last_name %}
+          </div>
+          {% include "partials/_form_field.html" with field=form.phone %}
+          <div class="signup-form__grid">
+            <div class="pwcol">
+              {% include "partials/_form_field.html" with field=form.password1 %}
+              <div class="pw-meter" id="pw-meter" aria-live="polite">
+                <span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span>
+                <span class="hint" id="pw-hint">Use 8+ chars, upper/lower/number/symbol</span>
+              </div>
+            </div>
+            {% include "partials/_form_field.html" with field=form.password2 %}
+          </div>
+
+          <div class="signup-card__cta">
+            <button class="signup-card__button" id="signup-submit" type="submit">
+              <span>Create account</span>
+            </button>
+            <a href="{% url 'parking:login' %}" class="signup-card__link">Already have an account? Log in</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title>UniPark Icon</title>
+  <desc>Abstract parking pin with gradient background</desc>
+  <defs>
+    <linearGradient id="gradient" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#5B00C7" />
+      <stop offset="100%" stop-color="#7C2AE8" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#gradient)"/>
+  <path d="M32 10c-9 0-16 7-16 16 0 12.25 12.8 24.5 14.27 25.95a2.5 2.5 0 0 0 3.46 0C35.2 50.5 48 38.25 48 26c0-9-7-16-16-16zm0 22a6 6 0 1 1 6-6 6 6 0 0 1-6 6z"
+        fill="#ffffff" opacity="0.96"/>
+</svg>
+

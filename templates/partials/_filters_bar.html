@@ -1,0 +1,35 @@
+<form
+  id="filters-form"
+  class="filters"
+  role="search"
+  aria-label="Search parking lots"
+  hx-get="{% url 'parking:find_parking' %}"
+  hx-target="#results-grid"
+  hx-trigger="change delay:350ms, submit"
+  hx-swap="innerHTML"
+>
+  <div class="search-row">
+    <label for="search" class="sr-only">Search lots</label>
+    <input
+      id="search"
+      name="q"
+      type="search"
+      placeholder="Search a street, landmark, or lot"
+      value="{{ query|default:'' }}"
+      autocomplete="off"
+      aria-label="Search parking lots"
+    >
+    <button
+      type="button"
+      id="btn-live"
+      class="btn-live"
+      aria-pressed="{% if live_enabled %}true{% else %}false{% endif %}"
+    >
+      Live availability
+    </button>
+  </div>
+
+  <input type="hidden" name="filter" id="selected-filter" value="{{ active_filter|default:'all' }}">
+  <input type="hidden" name="sort" id="selected-sort" value="{{ current_sort|default:'closest' }}">
+</form>
+

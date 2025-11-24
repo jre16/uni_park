@@ -1,0 +1,45 @@
+{% load i18n %}
+{% if metrics.reserved %}
+{% with reservation=metrics.reserved %}
+<aside class="card-reserved active" data-card-reserved>
+    <div class="card-reserved__header">
+        <span class="card-badge card-badge--ghost">{% trans "Reserved" %}</span>
+        <div class="card-reserved__status">
+            <span class="status-indicator"></span>
+            <span class="status-label">{% trans "Live" %}</span>
+        </div>
+    </div>
+    <div class="card-reserved__body">
+        <h3>{{ reservation.title }}</h3>
+        <p class="card-reserved__subtitle">{{ reservation.subtitle }}</p>
+        <div class="card-reserved__meta">
+            <div>
+                <span class="meta-label">{% trans "Lot" %}</span>
+                <span class="meta-value">{{ reservation.lot }}</span>
+            </div>
+            <div>
+                <span class="meta-label">{% trans "Spot" %}</span>
+                <span class="meta-value">{{ reservation.spot }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="card-reserved__footer">
+        <div class="card-reserved__time">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 6v6l3 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+            <span>{{ reservation.window }}</span>
+        </div>
+        <button class="card-reserved__cta" type="button">
+            <span>{% trans "Manage reservation" %}</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 5l7 7-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+        </button>
+    </div>
+</aside>
+{% endwith %}
+{% else %}
+<p class="text-sm text-surface-400 dark:text-surface-500">{% trans "No reservation selected." %}</p>
+{% endif %}
+

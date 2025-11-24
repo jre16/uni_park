@@ -1,0 +1,91 @@
+{% load i18n %}
+<div class="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-gradient-to-br {{ grad_from|default:'from-primary/25' }} {{ grad_to|default:'to-surface-900/92' }} p-8 text-white shadow-[0_45px_90px_-35px_rgba(91,0,199,0.7)]">
+    <div class="absolute inset-x-8 top-0 h-1.5 rounded-b-[2rem] {{ bar|default:'bg-primary/60' }}"></div>
+    <div class="pointer-events-none absolute inset-0 opacity-60">
+        <div class="absolute -top-24 -left-20 h-64 w-64 rounded-full {{ glow1|default:'bg-primary/35' }} blur-[120px]"></div>
+        <div class="absolute -bottom-24 -right-16 h-60 w-60 rounded-full {{ glow2|default:'bg-accent/25' }} blur-[120px]"></div>
+    </div>
+    <div class="relative flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
+        <div class="max-w-xl space-y-5">
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-2 rounded-full bg-white/12 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.24em] text-white/70">
+                    {% trans "Upcoming reservation" %}
+                </span>
+                <span class="inline-flex items-center justify-center rounded-full border border-white/25 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-white/60">
+                    {{ idx }}/3
+                </span>
+            </div>
+            <div>
+                <h3 class="text-2xl font-semibold">{{ reservation.parking_lot.name }}</h3>
+                <p class="mt-2 text-sm text-white/70">{{ reservation.parking_lot.address }}</p>
+            </div>
+            <dl class="grid gap-4 text-sm sm:grid-cols-2">
+                <div>
+                    <dt class="text-white/55 uppercase tracking-[0.18em] text-[0.7rem]">{% trans "Starts" %}</dt>
+                    <dd class="mt-1 text-base font-semibold">{{ reservation.start_time|date:"M d, H:i" }}</dd>
+                </div>
+                <div>
+                    <dt class="text-white/55 uppercase tracking-[0.18em] text-[0.7rem]">{% trans "Ends" %}</dt>
+                    <dd class="mt-1 text-base font-semibold">{{ reservation.end_time|date:"M d, H:i" }}</dd>
+                </div>
+                <div>
+                    <dt class="text-white/55 uppercase tracking-[0.18em] text-[0.7rem]">{% trans "Vehicle" %}</dt>
+                    <dd class="mt-1">{{ reservation.vehicle.make }} {{ reservation.vehicle.model }} · {{ reservation.vehicle.license_plate }}</dd>
+                </div>
+                <div>
+                    <dt class="text-white/55 uppercase tracking-[0.18em] text-[0.7rem]">{% trans "Total due" %}</dt>
+                    <dd class="mt-1 text-base font-semibold">{{ reservation.total_cost|floatformat:2 }} USD</dd>
+                </div>
+            </dl>
+        </div>
+        {% if reservation.qr_code %}
+        <div class="relative overflow-hidden rounded-[2.25rem] border border-white/12 bg-gradient-to-br from-surface-900/95 via-primary/30 to-surface-900/92 p-6 text-white shadow-[0_45px_90px_-38px_rgba(91,0,199,0.75)] backdrop-blur">
+            <div class="pointer-events-none absolute inset-0 opacity-60">
+                <div class="absolute -top-20 -right-16 h-56 w-56 rounded-full bg-primary/35 blur-[120px]"></div>
+                <div class="absolute -bottom-20 -left-16 h-52 w-52 rounded-full bg-accent/25 blur-[120px]"></div>
+            </div>
+            <div class="relative flex flex-col items-center gap-5 text-center">
+                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-white/60">{% trans "Gate access QR" %}</p>
+                <div class="rounded-3xl bg-white p-4 shadow-[0_25px_45px_-30px_rgba(9,9,26,0.6)]">
+                    <img src="{{ reservation.qr_code.url }}"
+                         alt="{% trans 'QR code for your reservation' %}"
+                         class="h-40 w-40 rounded-xl"
+                         loading="lazy">
+                </div>
+                <div class="flex flex-wrap items-center justify-center gap-3">
+                    <a href="{{ reservation.qr_code.url }}"
+                       download
+                       class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-accent to-accent/70 px-5 py-2 text-sm font-semibold text-surface-900 shadow-lg shadow-accent/30 transition hover:from-accent/90 hover:to-accent/60 hover:shadow-accent/40">
+                        {% trans "Download QR" %}
+                    </a>
+                    <a href="{{ reservation.qr_code.url }}"
+                       target="_blank"
+                       rel="noopener"
+                       class="inline-flex items-center gap-2 rounded-full border border-accent/50 bg-accent/10 px-5 py-2 text-sm font-semibold text-accent shadow-lg shadow-accent/20 transition hover:border-accent/70 hover:bg-accent/20 hover:shadow-accent/30">
+                        {% trans "Open in new tab" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <div class="relative mt-6 flex flex-col gap-3 text-xs text-white/65 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex flex-wrap items-center gap-3">
+            <span>#{{ reservation.id }}</span>
+            <span>•</span>
+            <span>{% trans "Status" %}: {{ reservation.get_status_display }}</span>
+        </div>
+        <form method="post"
+              hx-post="{% url 'parking:cancel_reservation' reservation.id %}"
+              hx-target="#home-reservation"
+              hx-swap="innerHTML"
+              hx-confirm="{% trans 'Cancel this reservation? Your spot will be released to others.' %}"
+              class="inline-flex">
+            {% csrf_token %}
+            <button type="submit"
+                    class="inline-flex items-center gap-2 rounded-full border border-white/25 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/75 transition hover:border-white/40 hover:text-white">
+                {% trans "Cancel reservation" %}
+            </button>
+        </form>
+    </div>
+</div>

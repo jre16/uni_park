@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Settings — UniPark" %}{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-5xl px-4 lg:px-0">
+    <div class="settings-shell">
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+                <h1 class="text-3xl font-semibold text-surface-900 dark:text-white">{% trans "Tune your experience" %}</h1>
+                <p class="text-sm text-surface-500 dark:text-surface-300">
+                    {% trans "Theme, language, accessibility—the controls below update instantly with Alpine and HTMX." %}
+                </p>
+            </div>
+            <form method="post" action="{% url 'parking:toggle_language' %}">
+                {% csrf_token %}
+                <button type="submit" class="magnetic-button inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary/70 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/40">
+                    {% if IS_RTL %}EN{% else %}عربي{% endif %}
+                </button>
+            </form>
+        </div>
+        <div class="settings-card-grid mt-8 grid gap-6 md:grid-cols-2">
+            <div class="settings-card">
+                <h2 class="text-lg font-semibold text-surface-900 dark:text-white">{% trans "Display" %}</h2>
+                <div class="mt-4 space-y-4 text-sm text-surface-500 dark:text-surface-300">
+                    <div class="settings-option">
+                        <span>{% trans "Theme" %}</span>
+                        <div class="settings-chip-group">
+                            <button type="button" class="settings-chip" @click="$dispatch('toggle-theme')" data-theme="light">
+                                {% trans "Light" %}
+                            </button>
+                            <button type="button" class="settings-chip" @click="$dispatch('toggle-theme')" data-theme="dark">
+                                {% trans "Dark" %}
+                            </button>
+                        </div>
+                    </div>
+                    <div class="settings-option">
+                        <span>{% trans "Font size" %}</span>
+                        <div class="settings-chip-group">
+                            <button type="button" class="settings-chip" data-font="base">
+                                {% trans "Base" %}
+                            </button>
+                            <button type="button" class="settings-chip" data-font="large">
+                                {% trans "Large" %}
+                            </button>
+                            <button type="button" class="settings-chip" data-font="xl">
+                                {% trans "XL" %}
+                            </button>
+                        </div>
+                    </div>
+                    <div class="settings-option">
+                        <span>{% trans "High contrast" %}</span>
+                        <label class="inline-flex items-center gap-2 text-surface-600 dark:text-surface-200">
+                            <input type="checkbox" id="high-contrast-toggle" class="h-4 w-4 rounded border-surface-300 text-primary focus:ring-primary/30">
+                            <span>{% trans "Enable" %}</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="settings-card">
+                <h2 class="text-lg font-semibold text-surface-900 dark:text-white">{% trans "Profile snapshot" %}</h2>
+                <dl class="mt-4 space-y-3 text-sm text-surface-500 dark:text-surface-300">
+                    <div class="settings-option settings-option--compact">
+                        <dt>{% trans "Email" %}</dt>
+                        <dd>{{ user.email }}</dd>
+                    </div>
+                    <div class="settings-option settings-option--compact">
+                        <dt>{% trans "Primary vehicle" %}</dt>
+                        <dd>{{ primary_vehicle }}</dd>
+                    </div>
+                    <div class="settings-option settings-option--compact">
+                        <dt>{% trans "Language" %}</dt>
+                        <dd>{% if IS_RTL %}{% trans "Arabic" %}{% else %}{% trans "English" %}{% endif %}</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+        <div class="settings-note mt-8 text-sm text-accent">
+            <p class="font-semibold">{% trans "Accessibility first" %}</p>
+            <p class="mt-2 text-accent/80">
+                {% trans "Font scaling and high-contrast preferences persist locally. Theme toggles update instantly via Alpine events without reloads." %}
+            </p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

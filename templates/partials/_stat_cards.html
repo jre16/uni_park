@@ -1,0 +1,39 @@
+{% load i18n unipark_tags %}
+<div class="stat-card-grid">
+    {% for card in metrics.cards %}
+        <article class="card-stat" data-card>
+            <div class="card-stat__header">
+                <p class="label">{{ card.title }}</p>
+                {% if card.delta %}
+                    <span class="card-badge">{{ card.delta }}</span>
+                {% endif %}
+            </div>
+            <div class="card-stat__value">
+                <span class="number countup" data-target="{{ card.value|default:0 }}">0</span>
+                {% if card.unit %}
+                    <span class="unit">{{ card.unit }}</span>
+                {% endif %}
+            </div>
+            {% if card.sparkline %}
+                <div class="card-stat__spark">
+                    {% with counter=forloop.counter|stringformat:"s" %}
+                    {% with gradient_id="spark-gradient-"|add:counter %}
+                    <svg class="sparkline" viewBox="0 0 100 40" role="img" aria-label="{% blocktrans %}Performance trend{% endblocktrans %}">
+                        <defs>
+                            <linearGradient id="{{ gradient_id }}" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0%" stop-color="#5B00C7"></stop>
+                                <stop offset="100%" stop-color="#22C55E"></stop>
+                            </linearGradient>
+                        </defs>
+                        <polyline points="{% for point in card.sparkline %}{{ forloop.counter0|add:"5" }},{{ 40|sub:point }} {% endfor %}" stroke="url(#{{ gradient_id }})"></polyline>
+                    </svg>
+                    {% endwith %}
+                    {% endwith %}
+                </div>
+            {% endif %}
+        </article>
+    {% empty %}
+        <p class="text-sm text-surface-400 dark:text-surface-500">{% trans "No metrics available." %}</p>
+    {% endfor %}
+</div>
+

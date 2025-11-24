@@ -1,0 +1,37 @@
+{% with active=active_filter|default:"all" %}
+<div class="results-filters" role="group" aria-label="Filter results">
+  <button
+    type="button"
+    class="chip{% if active == 'all' %} is-active{% endif %}"
+    data-filter="all"
+    aria-pressed="{% if active == 'all' %}true{% else %}false{% endif %}"
+  >
+    ⭐ All
+  </button>
+  <button
+    type="button"
+    class="chip{% if active == 'closest' %} is-active{% endif %}"
+    data-filter="closest"
+    aria-pressed="{% if active == 'closest' %}true{% else %}false{% endif %}"
+  >
+    📍 Closest
+  </button>
+  <button
+    type="button"
+    class="chip{% if active == 'best_price' %} is-active{% endif %}"
+    data-filter="best_price"
+    aria-pressed="{% if active == 'best_price' %}true{% else %}false{% endif %}"
+  >
+    💳 Best price
+  </button>
+  <button
+    type="button"
+    class="chip{% if active == 'availability' %} is-active{% endif %}"
+    data-filter="availability"
+    aria-pressed="{% if active == 'availability' %}true{% else %}false{% endif %}"
+  >
+    🟢 Availability
+  </button>
+</div>
+{% endwith %}
+

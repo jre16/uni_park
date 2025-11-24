@@ -1,0 +1,75 @@
+{% load i18n %}
+<section class="hero relative overflow-hidden" data-hero>
+    <div class="hero__vignette"></div>
+    <div class="hero__nebula">
+        <div class="hero__orb hero__orb--left" data-parallax data-parallax-depth="35"></div>
+        <div class="hero__orb hero__orb--right" data-parallax data-parallax-depth="20"></div>
+    </div>
+
+    <div class="hero__inner">
+        <div class="hero__copy" data-hero-copy>
+            <span class="hero__badge">
+                {% trans "Launch-ready" %}
+            </span>
+            <h1 class="hero__title" data-hero-headline>
+                <span class="hero__title-muted">{% trans "Parking orchestrated" %}</span>
+                <span class="hero__title-bright">{% trans "with precision" %}</span>
+            </h1>
+            <p class="hero__lead" data-hero-subhead>
+                {% trans "Discover, reserve, and glide into the perfect spot with live availability, shimmering motion, and language-aware design." %}
+            </p>
+
+            <div class="hero__actions">
+                <a href="{% url 'parking:find_parking' %}"
+                   class="hero__cta magnetic-button"
+                   data-hero-cta
+                   data-ripple>
+                    {% trans "Find a spot now" %}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M5 12h14m-6-6 6 6-6 6"/>
+                    </svg>
+                </a>
+                <a href="{% url 'parking:dashboard' %}"
+                   class="hero__secondary">
+                    {% trans "Explore dashboard" %}
+                </a>
+            </div>
+
+            <div class="hero__stats" data-hero-stats>
+                {% for stat in stats %}
+                    <div class="hero__stat" data-count-up-wrapper>
+                        <p class="hero__stat-value">
+                            <span data-count-up="{{ stat.value|default_if_none:0 }}" data-prefill="{{ stat.prefill }}">{{ stat.prefill }}</span>{{ stat.suffix }}
+                        </p>
+                        <p class="hero__stat-label">{{ stat.label }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="hero__card-stack" data-hero-stack>
+            <div class="hero__controls">
+                <label for="hero-location" class="hero__controls-label">
+                    {% trans "Switch location" %}
+                </label>
+                <select id="hero-location"
+                        class="hero__controls-select"
+                        hx-get="{% url 'parking:hero_location' %}"
+                        hx-target="#hero-card-shell"
+                        hx-trigger="change"
+                        name="location">
+                    {% for option in hero_locations %}
+                        <option value="{{ option.slug }}" {% if option.slug == hero_location.slug %}selected{% endif %}>
+                            {{ option.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div id="hero-card-shell" class="hero__card-shell" data-parallax data-parallax-depth="12">
+                {% include "partials/_hero_card.html" with location=hero_location %}
+            </div>
+        </div>
+    </div>
+</section>
+

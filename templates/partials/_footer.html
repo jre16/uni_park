@@ -1,0 +1,49 @@
+{% load i18n %}
+<footer class="relative z-0 mt-20 bg-gradient-to-b from-transparent via-surface-900/15 to-surface-900/40 py-12 text-surface-700 dark:text-surface-200">
+    <div class="mx-auto flex max-w-6xl flex-col gap-10 px-4 lg:flex-row lg:justify-between lg:px-6">
+        <div class="max-w-sm space-y-4">
+            <h2 class="text-lg font-semibold text-white">{% trans "Arrive calm, leave delighted." %}</h2>
+            <p class="text-sm leading-relaxed text-surface-300">
+                {% trans "UniPark orchestrates campus parking with live availability, fluid payments, and an interface that feels crafted." %}
+            </p>
+            <div class="flex items-center gap-3 text-sm text-surface-400">
+                <span id="status-dot" class="relative inline-flex h-2.5 w-2.5 items-center justify-center">
+                    <span class="absolute inline-flex h-full w-full rounded-full bg-accent opacity-50"></span>
+                    <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-accent"></span>
+                </span>
+                <span>{% trans "Platform status: All clear" %}</span>
+            </div>
+        </div>
+        <div class="grid flex-1 grid-cols-1 gap-8 text-sm sm:grid-cols-2 lg:grid-cols-3">
+            <div class="space-y-3">
+                <p class="text-xs uppercase tracking-wide text-surface-400">{% trans "Product" %}</p>
+                <a href="{% url 'parking:home' %}" class="footer-link">{% trans "Overview" %}</a>
+                <a href="{% url 'parking:find_parking' %}" class="footer-link">{% trans "Live Map" %}</a>
+                <a href="{% url 'parking:dashboard' %}" class="footer-link">{% trans "Operations Dashboard" %}</a>
+            </div>
+            <div class="space-y-3">
+                <p class="text-xs uppercase tracking-wide text-surface-400">{% trans "Support" %}</p>
+                <a href="#" class="footer-link">{% trans "Help Center" %}</a>
+                <a href="#" class="footer-link">{% trans "Accessibility" %}</a>
+                <a href="{% url 'parking:settings' %}" class="footer-link">{% trans "Preferences" %}</a>
+            </div>
+            <div class="space-y-3">
+                <p class="text-xs uppercase tracking-wide text-surface-400">{% trans "Legal" %}</p>
+                <a href="#" class="footer-link">{% trans "Privacy Policy" %}</a>
+                <a href="#" class="footer-link">{% trans "Terms of Service" %}</a>
+                <a href="#" class="footer-link">{% trans "Contact" %}</a>
+            </div>
+        </div>
+    </div>
+    <div class="mt-10 border-t border-white/10">
+        <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-6 text-xs text-surface-500 lg:flex-row">
+            <p>&copy; {% now "Y" %} UniPark. {% trans "All rights reserved." %}</p>
+            <div class="flex items-center gap-6">
+                <a href="#" class="footer-link">{% trans "Instagram" %}</a>
+                <a href="#" class="footer-link">{% trans "LinkedIn" %}</a>
+                <a href="#" class="footer-link">{% trans "Twitter" %}</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
