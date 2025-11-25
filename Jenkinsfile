@@ -2,8 +2,6 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_REGISTRY = 'docker.io'
-        IMAGE_NAME = 'unipark'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
     }
 
@@ -22,13 +20,13 @@ pipeline {
         stage('Setup Minikube Environment') {
             steps {
                 script {
-                    sh '''
-                        echo "=== Checking Minikube status ==="
+                    bat '''
+                        echo === Checking Minikube status ===
                         minikube status || minikube start --driver=docker
                         
-                        echo "=== Switching to Minikube Docker environment ==="
-                        eval $(minikube docker-env)
-                        docker info | grep "Server Version"
+                        echo === Switching to Minikube Docker environment ===
+                        @FOR /f "tokens=*" %%i IN ('minikube -p minikube docker-env --shell cmd') DO @%%i
+                        docker info | findstr "Server Version"
                     '''
                 }
             }
@@ -38,44 +36,44 @@ pipeline {
             parallel {
                 stage('Build Auth Service') {
                     steps {
-                        sh '''
-                            eval $(minikube docker-env)
-                            echo "=== Building Auth Service ==="
+                        bat '''
+                            @FOR /f "tokens=*" %%i IN ('minikube -p minikube docker-env --shell cmd') DO @%%i
+                            echo === Building Auth Service ===
                             docker build -t unipark-auth:latest ./services/auth
-                            docker images | grep unipark-auth
+                            docker images | findstr unipark-auth
                         '''
                     }
                 }
                 
                 stage('Build Parking Service') {
                     steps {
-                        sh '''
-                            eval $(minikube docker-env)
-                            echo "=== Building Parking Service ==="
+                        bat '''
+                            @FOR /f "tokens=*" %%i IN ('minikube -p minikube docker-env --shell cmd') DO @%%i
+                            echo === Building Parking Service ===
                             docker build -t unipark-parking:latest ./services/parking
-                            docker images | grep unipark-parking
+                            docker images | findstr unipark-parking
                         '''
                     }
                 }
                 
                 stage('Build Reservations Service') {
                     steps {
-                        sh '''
-                            eval $(minikube docker-env)
-                            echo "=== Building Reservations Service ==="
+                        bat '''
+                            @FOR /f "tokens=*" %%i IN ('minikube -p minikube docker-env --shell cmd') DO @%%i
+                            echo === Building Reservations Service ===
                             docker build -t unipark-reservations:latest ./services/reservations
-                            docker images | grep unipark-reservations
+                            docker images | findstr unipark-reservations
                         '''
                     }
                 }
                 
                 stage('Build Frontend') {
                     steps {
-                        sh '''
-                            eval $(minikube docker-env)
-                            echo "=== Building Django Frontend ==="
+                        bat '''
+                            @FOR /f "tokens=*" %%i IN ('minikube -p minikube docker-env --shell cmd') DO @%%i
+                            echo === Building Django Frontend ===
                             docker build -t unipark-frontend:latest -f services/frontend/Dockerfile .
-                            docker images | grep unipark-frontend
+                            docker images | findstr unipark-frontend
                         '''
                     }
                 }
@@ -84,26 +82,40 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh '''
-                    echo "=== Updating kubectl context ==="
+                bat '''
+                    echo === Updating kubectl context ===
                     minikube update-context
                     
-                    echo "=== Applying Kubernetes manifests ==="
+                    echo === Applying Kubernetes manifests ===
                     kubectl apply -f k8s/microservices.yaml
                     
-                    echo "=== Waiting for database deployments ==="
-                    kubectl rollout status deployment/postgres-auth --timeout=180s || true
-                    kubectl rollout status deployment/postgres-parking --timeout=180s || true
-                    kubectl rollout status deployment/postgres-reservations --timeout=180s || true
-                    kubectl rollout status deployment/postgres-frontend --timeout=180s || true
+                    echo === Waiting for database deployments ===
+                    kubectl rollout status deployment/postgres-auth --timeout=180s
+                    if errorlevel 1 echo Warning: postgres-auth deployment timeout
                     
-                    echo "=== Waiting for microservices deployments ==="
-                    kubectl rollout status deployment/auth-service --timeout=180s || true
-                    kubectl rollout status deployment/parking-service --timeout=180s || true
-                    kubectl rollout status deployment/reservations-service --timeout=180s || true
-                    kubectl rollout status deployment/unipark-frontend --timeout=180s || true
+                    kubectl rollout status deployment/postgres-parking --timeout=180s
+                    if errorlevel 1 echo Warning: postgres-parking deployment timeout
                     
-                    echo "=== Deployment Status ==="
+                    kubectl rollout status deployment/postgres-reservations --timeout=180s
+                    if errorlevel 1 echo Warning: postgres-reservations deployment timeout
+                    
+                    kubectl rollout status deployment/postgres-frontend --timeout=180s
+                    if errorlevel 1 echo Warning: postgres-frontend deployment timeout
+                    
+                    echo === Waiting for microservices deployments ===
+                    kubectl rollout status deployment/auth-service --timeout=180s
+                    if errorlevel 1 echo Warning: auth-service deployment timeout
+                    
+                    kubectl rollout status deployment/parking-service --timeout=180s
+                    if errorlevel 1 echo Warning: parking-service deployment timeout
+                    
+                    kubectl rollout status deployment/reservations-service --timeout=180s
+                    if errorlevel 1 echo Warning: reservations-service deployment timeout
+                    
+                    kubectl rollout status deployment/unipark-frontend --timeout=180s
+                    if errorlevel 1 echo Warning: unipark-frontend deployment timeout
+                    
+                    echo === Deployment Status ===
                     kubectl get pods
                     kubectl get svc
                 '''
@@ -112,21 +124,23 @@ pipeline {
 
         stage('Run Migrations') {
             steps {
-                sh '''
-                    echo "=== Running Django migrations ==="
-                    POD_NAME=$(kubectl get pods -l app=unipark-frontend -o jsonpath="{.items[0].metadata.name}")
-                    echo "Running migrations in pod: $POD_NAME"
-                    kubectl exec $POD_NAME -- python manage.py migrate --noinput || echo "Migration already ran during startup"
+                bat '''
+                    echo === Running Django migrations ===
+                    FOR /F "tokens=*" %%i IN ('kubectl get pods -l app=unipark-frontend -o jsonpath="{.items[0].metadata.name}"') DO SET POD_NAME=%%i
+                    echo Running migrations in pod: %POD_NAME%
+                    kubectl exec %POD_NAME% -- python manage.py migrate --noinput
+                    if errorlevel 1 echo Migration already ran during startup
                 '''
             }
         }
 
         stage('Get Service URL') {
             steps {
-                sh '''
-                    echo "=== Application URLs ==="
-                    echo "Frontend: http://$(minikube ip):30080"
-                    minikube service unipark-frontend --url || true
+                bat '''
+                    echo === Application URLs ===
+                    FOR /F "tokens=*" %%i IN ('minikube ip') DO SET MINIKUBE_IP=%%i
+                    echo Frontend: http://%MINIKUBE_IP%:30080
+                    minikube service unipark-frontend --url
                 '''
             }
         }
@@ -134,22 +148,24 @@ pipeline {
 
     post {
         success {
-            echo '✅ Deployment successful!'
+            echo '=== DEPLOYMENT SUCCESSFUL ==='
             echo 'Access the application:'
-            echo '  Frontend: minikube service unipark-frontend'
+            echo '  Run: minikube service unipark-frontend'
             echo '  Dashboard: kubectl get pods,svc'
         }
         failure {
-            echo '❌ Deployment failed!'
+            echo '=== DEPLOYMENT FAILED ==='
             echo 'Check logs with:'
             echo '  kubectl get pods'
             echo '  kubectl logs -l app=unipark-frontend'
             echo '  kubectl describe pod <pod-name>'
         }
         always {
-            echo '=== Final Status ==='
-            sh 'kubectl get pods || true'
-            sh 'kubectl get svc || true'
+            bat '''
+                echo === Final Status ===
+                kubectl get pods
+                kubectl get svc
+            '''
         }
     }
 }
