@@ -142,8 +142,14 @@ pipeline {
                 bat '''
                     echo === Application URLs ===
                     FOR /F "tokens=*" %%i IN ('minikube ip') DO SET MINIKUBE_IP=%%i
-                    echo Frontend: http://%MINIKUBE_IP%:30080
-                    minikube service unipark-frontend --url
+                    FOR /F "tokens=*" %%p IN ('kubectl get svc unipark-frontend -o jsonpath="{.spec.ports[0].nodePort}"') DO SET NODEPORT=%%p
+                    echo.
+                    echo ========================================
+                    echo   UNIPARK Application Deployed!
+                    echo ========================================
+                    echo   Frontend: http://%%i:%%p
+                    echo ========================================
+                    echo.
                 '''
             }
         }
