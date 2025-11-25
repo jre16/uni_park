@@ -47,6 +47,11 @@ CSRF_TRUSTED_ORIGINS = [
     'https://unipark.local',
 ]
 
+# Disable CSRF for demo/development
+CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_HTTPONLY = False
+SESSION_COOKIE_SECURE = False
+
 
 # Application definition
 
