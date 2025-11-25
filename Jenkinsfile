@@ -124,13 +124,16 @@ pipeline {
 
         stage('Run Migrations') {
             steps {
-                bat '''
-                    echo === Running Django migrations ===
-                    FOR /F "tokens=*" %%i IN ('kubectl get pods -l app=unipark-frontend -o jsonpath="{.items[0].metadata.name}"') DO SET POD_NAME=%%i
-                    echo Running migrations in pod: %POD_NAME%
-                    kubectl exec %POD_NAME% -- python manage.py migrate --noinput
-                    if errorlevel 1 echo Migration already ran during startup
-                '''
+                script {
+                    bat '''
+                        echo === Running Django migrations ===
+                        kubectl get pods -l app=unipark-frontend -o jsonpath="{.items[0].metadata.name}" > pod_name.txt
+                        set /p POD_NAME=<pod_name.txt
+                        echo Running migrations in pod: %POD_NAME%
+                        kubectl exec %POD_NAME% -- python manage.py migrate --noinput || echo Migration already ran during startup
+                        del pod_name.txt
+                    '''
+                }
             }
         }
 
