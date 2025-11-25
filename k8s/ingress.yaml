@@ -1,0 +1,59 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: unipark-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: unipark.local
+    http:
+      paths:
+      # Frontend - main application
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: unipark-frontend
+            port:
+              number: 80
+      # API Gateway - microservices access
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: api-gateway
+            port:
+              number: 80
+---
+# Alternative: Access without domain (using Minikube IP)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: unipark-ingress-ip
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      # Frontend accessible at http://<minikube-ip>/
+      - path: /()(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: unipark-frontend
+            port:
+              number: 80
+      # API Gateway accessible at http://<minikube-ip>/api
+      - path: /api(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: api-gateway
+            port:
+              number: 80

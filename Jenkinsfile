@@ -122,6 +122,19 @@ pipeline {
             }
         }
 
+        stage('Deploy Ingress') {
+            steps {
+                bat '''
+                    echo === Deploying Ingress Controller ===
+                    kubectl apply -f k8s/ingress.yaml
+                    
+                    echo === Waiting for Ingress ===
+                    timeout /t 10 /nobreak
+                    kubectl get ingress
+                '''
+            }
+        }
+
         stage('Run Migrations') {
             steps {
                 script {
@@ -147,9 +160,21 @@ pipeline {
                     echo ========================================
                     echo   UNIPARK Application Deployed!
                     echo ========================================
-                    echo   Frontend: http://%%i:%%p
-                    echo ========================================
                     echo.
+                    echo   Method 1: Ingress (Recommended)
+                    echo   Run: minikube tunnel
+                    echo   Then visit: http://%%i
+                    echo   Or with domain: http://unipark.local
+                    echo   (Add "%%i unipark.local" to C:\Windows\System32\drivers\etc\hosts)
+                    echo.
+                    echo   Method 2: NodePort (Direct)
+                    echo   Visit: http://%%i:%%p
+                    echo.
+                    echo   Method 3: Port Forward
+                    echo   Run: kubectl port-forward svc/unipark-frontend 8080:80
+                    echo   Then visit: http://localhost:8080
+                    echo.
+                    echo ========================================
                 '''
             }
         }
