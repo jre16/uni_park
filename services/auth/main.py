@@ -171,18 +171,20 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     db.refresh(db_user)
     logger.info(f"✅ User created with ID: {db_user.id}")
     
-    # Create profile (auto-verified, no verification code needed)
+    # Create profile
+    verification_code = ''.join(random.choices(string.digits, k=6))
     profile = StudentProfile(
         user_id=db_user.id,
         phone_number=user.phone,
-        email_verified=True,  # Auto-verify
-        phone_verified=True,  # Auto-verify
-        verification_code=None
+        verification_code=verification_code
     )
     db.add(profile)
     db.commit()
     
-    logger.info(f"✅ Registration completed successfully for {user.username} (auto-verified)")
+    logger.info(f"=" * 60)
+    logger.info(f"🔑 VERIFICATION CODE FOR {user.email}: {verification_code}")
+    logger.info(f"=" * 60)
+    logger.info(f"✅ Registration completed successfully for {user.username}")
     
     return db_user
 
@@ -200,7 +202,12 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # No email verification check - allow all users to login
+    # Check email verification
+    profile = db.query(StudentProfile).filter(StudentProfile.user_id == user.id).first()
+    if profile and not profile.email_verified:
+        logger.warning(f"❌ Login failed: Email not verified for {form_data.username}")
+        raise HTTPException(status_code=403, detail="Please verify your email first")
+    
     access_token = create_access_token(data={"sub": user.username})
     logger.info(f"✅ Login successful for {form_data.username}")
     return {"access_token": access_token, "token_type": "bearer"}

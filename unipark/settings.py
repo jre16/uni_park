@@ -29,29 +29,6 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',') if os.environ.get('ALLOWED_HOSTS') else ['*']
 
-# CSRF trusted origins for Docker/Kubernetes deployments
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost',
-    'http://127.0.0.1',
-    'http://localhost:8000',
-    'http://localhost:30080',
-    'http://192.168.49.2',
-    'http://192.168.49.2:30080',
-    'http://unipark.local',
-    'https://localhost',
-    'https://127.0.0.1',
-    'https://localhost:8000',
-    'https://localhost:30080',
-    'https://192.168.49.2',
-    'https://192.168.49.2:30080',
-    'https://unipark.local',
-]
-
-# Disable CSRF for demo/development
-CSRF_COOKIE_SECURE = False
-CSRF_COOKIE_HTTPONLY = False
-SESSION_COOKIE_SECURE = False
-
 
 # Application definition
 
