@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+import logging
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
@@ -26,6 +27,8 @@ from typing import Any
 from .forms import StudentLoginForm, StudentSignupForm, VehicleForm
 from .models import ParkingLot, Reservation, StudentProfile, Vehicle
 from .utils import demo
+
+logger = logging.getLogger(__name__)
 
 
 def is_htmx(request):
@@ -168,6 +171,9 @@ def signup(request):
             profile = user.studentprofile
             profile.verification_code = verification_code
             profile.save()
+            logger.info("=" * 60)
+            logger.info(f"🔑 VERIFICATION CODE FOR {user.email}: {verification_code}")
+            logger.info("=" * 60)
             messages.success(request, _("Account created successfully! Please verify your email."))
             return redirect("parking:verify_email")
     else:
@@ -218,7 +224,9 @@ def resend_verification(request):
                 verification_code = ''.join(random.choices(string.digits, k=6))
                 profile.verification_code = verification_code
                 profile.save()
-                print(f"New verification code for {email}: {verification_code}")
+                logger.info("=" * 60)
+                logger.info(f"🔑 RESENT VERIFICATION CODE FOR {email}: {verification_code}")
+                logger.info("=" * 60)
                 messages.success(request, 'New verification code sent!')
             else:
                 messages.info(request, 'Email is already verified.')
