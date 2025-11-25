@@ -164,12 +164,14 @@ def signup(request):
         form = StudentSignupForm(request.POST)
         if form.is_valid():
             user = form.save()
-            verification_code = "".join(random.choices(string.digits, k=6))
+            # Auto-verify user - no verification needed
             profile = user.studentprofile
-            profile.verification_code = verification_code
+            profile.email_verified = True
+            profile.phone_verified = True
+            profile.verification_code = None
             profile.save()
-            messages.success(request, _("Account created successfully! Please verify your email."))
-            return redirect("parking:verify_email")
+            messages.success(request, _("Account created successfully! You can now log in."))
+            return redirect("parking:login")
     else:
         form = StudentSignupForm()
     return render(
@@ -189,42 +191,15 @@ def signup(request):
 
 
 def verify_email(request):
-    if request.method == 'POST':
-        code = request.POST.get('verification_code')
-        email = request.POST.get('email')
-        try:
-            user = User.objects.get(email=email)
-            profile = user.studentprofile
-            if profile.verification_code == code:
-                profile.email_verified = True
-                profile.verification_code = None
-                profile.save()
-                messages.success(request, 'Email verified successfully! You can now log in.')
-                return redirect('parking:login')
-            else:
-                messages.error(request, 'Invalid verification code.')
-        except User.DoesNotExist:
-            messages.error(request, 'User not found.')
-    return render(request, 'parking/verify_email.html')
+    # Verification disabled - redirect to login
+    messages.info(request, 'Email verification is not required. Please log in.')
+    return redirect('parking:login')
 
 
 def resend_verification(request):
-    if request.method == 'POST':
-        email = request.POST.get('email')
-        try:
-            user = User.objects.get(email=email)
-            profile = user.studentprofile
-            if not profile.email_verified:
-                verification_code = ''.join(random.choices(string.digits, k=6))
-                profile.verification_code = verification_code
-                profile.save()
-                print(f"New verification code for {email}: {verification_code}")
-                messages.success(request, 'New verification code sent!')
-            else:
-                messages.info(request, 'Email is already verified.')
-        except User.DoesNotExist:
-            messages.error(request, 'User not found.')
-    return redirect('parking:verify_email')
+    # Verification disabled - redirect to login
+    messages.info(request, 'Email verification is not required. Please log in.')
+    return redirect('parking:login')
 
 
 def user_login(request):
@@ -252,10 +227,7 @@ def user_login(request):
             if user:
                 authenticated_user = authenticate(username=user.username, password=password)
                 if authenticated_user:
-                    profile = authenticated_user.studentprofile
-                    if not profile.email_verified:
-                        messages.error(request, _("Please verify your email before logging in."))
-                        return redirect("parking:verify_email")
+                    # No email verification check - allow all users
                     login(request, authenticated_user)
                     messages.success(request, _("Logged in successfully!"))
                     return redirect("parking:dashboard")
