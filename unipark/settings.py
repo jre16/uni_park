@@ -38,6 +38,13 @@ CSRF_TRUSTED_ORIGINS = [
     'http://192.168.49.2',
     'http://192.168.49.2:30080',
     'http://unipark.local',
+    'https://localhost',
+    'https://127.0.0.1',
+    'https://localhost:8000',
+    'https://localhost:30080',
+    'https://192.168.49.2',
+    'https://192.168.49.2:30080',
+    'https://unipark.local',
 ]
 
 
