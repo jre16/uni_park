@@ -165,7 +165,7 @@ pipeline {
                     echo   Run: minikube tunnel
                     echo   Then visit: http://%%i
                     echo   Or with domain: http://unipark.local
-                    echo   (Add "%%i unipark.local" to C:\Windows\System32\drivers\etc\hosts)
+                    echo   (Add "%%i unipark.local" to hosts file)
                     echo.
                     echo   Method 2: NodePort (Direct)
                     echo   Visit: http://%%i:%%p
